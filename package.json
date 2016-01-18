@@ -1,5 +1,5 @@
 {
-  "name": "search-index-indexer",
+  "name": "search-index-adder",
   "version": "0.0.1",
   "description": "The indexing module for search-index",
   "main": "lib/indexer.js",
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/fergiemcdowall/search-index-indexer.git"
+    "url": "git+https://github.com/fergiemcdowall/search-index-adder.git"
   },
   "keywords": [
     "search",
@@ -18,9 +18,9 @@
   "author": "Fergus McDowall",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/fergiemcdowall/search-index-indexer/issues"
+    "url": "https://github.com/fergiemcdowall/search-index-adder/issues"
   },
-  "homepage": "https://github.com/fergiemcdowall/search-index-indexer#readme",
+  "homepage": "https://github.com/fergiemcdowall/search-index-adder#readme",
   "dependencies": {
     "async": "^1.5.2",
     "lodash": "^3.10.1",
