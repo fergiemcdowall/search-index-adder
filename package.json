@@ -1,0 +1,32 @@
+{
+  "name": "search-index-indexer",
+  "version": "0.0.1",
+  "description": "The indexing module for search-index",
+  "main": "lib/indexer.js",
+  "scripts": {
+    "test": "tape"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fergiemcdowall/search-index-indexer.git"
+  },
+  "keywords": [
+    "search",
+    "index",
+    "indexing"
+  ],
+  "author": "Fergus McDowall",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fergiemcdowall/search-index-indexer/issues"
+  },
+  "homepage": "https://github.com/fergiemcdowall/search-index-indexer#readme",
+  "dependencies": {
+    "async": "^1.5.2",
+    "lodash": "^3.10.1",
+    "object-hash": "^1.1.0",
+    "search-index-deleter": "0.0.1",
+    "term-frequency": "0.0.3",
+    "term-vector": "0.0.12"
+  }
+}
