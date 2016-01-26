@@ -25,15 +25,12 @@ module.exports = function (options) {
       doc.id = doc.id + ''; // stringify ID
     });
     deleter.deleteBatch(_.pluck(batch, 'id'), indexes, function (err) {
-      if (err) log.warn(err);
+      if (err) log.info(err);
       addBatch(indexes, batch, batchOptions, function(err) {
         return callback(err);
       });
     });
   };
-
-
-
 
   var removeInvalidFields = function (doc) {
     for (var fieldKey in doc) {
@@ -158,10 +155,8 @@ module.exports = function (options) {
       key: 'DELETE-DOCUMENT￮' + doc.id,
       value: _.pluck(docIndexEntries, 'key')
     });
-//    dbInstructions.push(docIndexEntries);
     return docIndexEntries;
   }
-
 
   function addBatch(indexes, batch, batchOptions, callbackster) {
     var dbInstructions = [];
@@ -195,8 +190,8 @@ module.exports = function (options) {
         }
         return prev;
       }, []);
-    async.eachLimit(
-      dbInstructions, 5,
+    async.eachSeries(
+      dbInstructions,
       function (item, callback) {
         indexes.get(item.key, function (err, val) {
           if (item.key.substring(0, 2) == 'TF') {
@@ -227,7 +222,6 @@ module.exports = function (options) {
         });
       });
   }
-
 
   return indexer;
 };

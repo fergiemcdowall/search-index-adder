@@ -2,7 +2,7 @@
   "name": "search-index-adder",
   "version": "0.0.3",
   "description": "The indexing module for search-index",
-  "main": "lib/indexer.js",
+  "main": "indexer.js",
   "scripts": {
     "test": "tape"
   },
