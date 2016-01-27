@@ -1,18 +1,18 @@
 /*jshint -W083 */ //makes jslint overlook functions in lodash for-loops
 
-var _ = require('lodash');
-var async = require('async');
-var deleter = require('search-index-deleter')();
-var hash = require('object-hash');
-var tv = require('term-vector');
-var tf = require('term-frequency');
-var skeleton = require('log-skeleton');
-
 module.exports = function (options) {
+  var _ = require('lodash');
+  var async = require('async');
+  var deleter = require('search-index-deleter')(options);
+  var hash = require('object-hash');
+  var tv = require('term-vector');
+  var tf = require('term-frequency');
+  var skeleton = require('log-skeleton');
+
   var log = skeleton((options) ? options.log : undefined);
   var indexer = {};
 
-  indexer.addBatchToIndex = function (indexes, batch, batchOptions, callback) {
+  indexer.addBatchToIndex = function (batch, batchOptions, callback) {
     if (!_.isArray(batch) && _.isPlainObject(batch)) {
       batch = [batch];
     }
@@ -24,9 +24,9 @@ module.exports = function (options) {
         doc.id = (++salt) + '-' + hash(doc);
       doc.id = doc.id + ''; // stringify ID
     });
-    deleter.deleteBatch(_.pluck(batch, 'id'), indexes, function (err) {
+    deleter.deleteBatch(_.pluck(batch, 'id'), function (err) {
       if (err) log.info(err);
-      addBatch(indexes, batch, batchOptions, function(err) {
+      addBatch(batch, batchOptions, function(err) {
         return callback(err);
       });
     });
@@ -158,7 +158,7 @@ module.exports = function (options) {
     return docIndexEntries;
   }
 
-  function addBatch(indexes, batch, batchOptions, callbackster) {
+  function addBatch(batch, batchOptions, callbackster) {
     var dbInstructions = [];
     batch.forEach(function (doc) {
       dbInstructions.push(getIndexEntries(doc, batchOptions));
@@ -193,7 +193,7 @@ module.exports = function (options) {
     async.eachSeries(
       dbInstructions,
       function (item, callback) {
-        indexes.get(item.key, function (err, val) {
+        options.indexes.get(item.key, function (err, val) {
           if (item.key.substring(0, 2) == 'TF') {
             if (val)
               item.value = item.value.concat(val);
@@ -214,8 +214,7 @@ module.exports = function (options) {
         });
       },
       function (err) {
-        //          console.log(JSON.stringify(mergeDbInstructions, null, 2))
-        indexes.batch(dbInstructions, function (err) {
+        options.indexes.batch(dbInstructions, function (err) {
           if (err) log.warn('Ooops!', err);
           else log.info('batch indexed!');
           return callbackster(null);
