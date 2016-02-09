@@ -1,36 +1,50 @@
 /*jshint -W083 */ //makes jslint overlook functions in lodash for-loops
+const _ = require('lodash');
 
 module.exports = function (options) {
-  var _ = require('lodash');
+  var indexer = {};
+  indexer.options = getOptions(options)
+
   var async = require('async');
-  var deleter = require('search-index-deleter')(options);
+  var deleter = require('search-index-deleter')(indexer.options);
   var hash = require('object-hash');
   var tv = require('term-vector');
   var tf = require('term-frequency');
   var skeleton = require('log-skeleton');
 
-  var log = skeleton((options) ? options.log : undefined);
-  var indexer = {};
+  var log = skeleton((indexer.options) ? indexer.options.log : undefined);
 
-  indexer.addBatchToIndex = function (batch, batchOptions, callback) {
-    if (!_.isArray(batch) && _.isPlainObject(batch)) {
-      batch = [batch];
-    }
-    batchOptions = _.defaults(batchOptions, options);
+
+  var q = async.queue(function (batch, callback) {
+    batch.options = _.defaults(batch.options, options);
     //generate IDs if none are present and stringify numeric IDs
     var salt = 0;
-    batch.map(function (doc) {
+    batch.data.map(function (doc) {
       if (!doc.id)
         doc.id = (++salt) + '-' + hash(doc);
       doc.id = doc.id + ''; // stringify ID
     });
-    deleter.deleteBatch(_.pluck(batch, 'id'), function (err) {
+    deleter.deleteBatch(_.pluck(batch.data, 'id'), function (err) {
       if (err) log.info(err);
-      addBatch(batch, batchOptions, function(err) {
+      addBatch(batch.data, batch.options, function(err) {
         return callback(err);
       });
     });
+  }, 1);
+
+
+  indexer.getOptions = function() {
+    return indexer.options
+  }
+  
+  indexer.addBatchToIndex = function (batch, batchOptions, callback) {
+    batchOptions = processBatchOptions(indexer.options, batchOptions);
+    if (!_.isArray(batch) && _.isPlainObject(batch)) {
+      batch = [batch];
+    }
+    q.push({data:batch, options:batchOptions}, callback)
   };
+
 
   var removeInvalidFields = function (doc) {
     for (var fieldKey in doc) {
@@ -94,7 +108,7 @@ module.exports = function (options) {
               docIndexEntries.push({
                 type: 'put',
                 key: 'RI￮' + fieldName + '￮' + item[0] + '￮' + filter + '￮' + filterKey,
-                value: [[item[1], doc.id]]
+                value: [[item[1].toFixed(16), doc.id]]
               });
             });
           });
@@ -106,7 +120,7 @@ module.exports = function (options) {
           docIndexEntries.push({
             type: 'put',
             key: 'RI￮' + fieldName + '￮' + item[0] + '￮￮',
-            value: [[item[1], doc.id]]
+            value: [[item[1].toFixed(16), doc.id]]
           });
         });
       };
@@ -135,7 +149,7 @@ module.exports = function (options) {
             docIndexEntries.push({
               type: 'put',
               key: 'RI￮*￮' + item[0] + '￮' + filter + '￮' + filterKey,
-              value: [[item[1], doc.id]]
+              value: [[item[1].toFixed(16), doc.id]]
             });
           });
         });
@@ -147,7 +161,7 @@ module.exports = function (options) {
         docIndexEntries.push({
           type: 'put',
           key: 'RI￮*￮' + item[0] + '￮￮',
-          value: [[item[1], doc.id]]
+          value: [[item[1].toFixed(16), doc.id]]
         });
       });
     docIndexEntries.push({
@@ -193,7 +207,7 @@ module.exports = function (options) {
     async.eachSeries(
       dbInstructions,
       function (item, callback) {
-        options.indexes.get(item.key, function (err, val) {
+        indexer.options.indexes.get(item.key, function (err, val) {
           if (item.key.substring(0, 2) == 'TF') {
             if (val)
               item.value = item.value.concat(val);
@@ -203,7 +217,12 @@ module.exports = function (options) {
             if (val)
               item.value = item.value.concat(val);
             item.value = item.value.sort(function (a, b) {
-              return b[0] - a[0];
+              //sort buy score and then ID, descending:
+              if (b[0] > a[0]) return 1
+              if (b[0] < a[0]) return -1
+              if (b[1] > a[1]) return 1
+              if (b[1] < a[1]) return -1
+              return 0
             });
           }
           else if (item.key == 'DOCUMENT-COUNT') {
@@ -214,7 +233,7 @@ module.exports = function (options) {
         });
       },
       function (err) {
-        options.indexes.batch(dbInstructions, function (err) {
+        indexer.options.indexes.batch(dbInstructions, function (err) {
           if (err) log.warn('Ooops!', err);
           else log.info('batch indexed!');
           return callbackster(null);
@@ -225,3 +244,53 @@ module.exports = function (options) {
   return indexer;
 };
 
+var getOptions = function(options) {
+  const bunyan = require('bunyan')
+  const level = require('levelup')
+  const tv = require('term-vector')
+  var newOptions = {}
+  var defaults = {
+    deletable: true,
+    fieldedSearch: true,
+    fieldsToStore: 'all',
+    indexPath: 'si',
+    logLevel: 'error',
+    nGramLength: 1,
+    separator: /[\|' \.,\-|(\n)]+/,
+    stopwords: tv.getStopwords('en').sort(),
+  }
+  // initialize defaults options
+  newOptions = _.clone(_.defaults(options || {}, defaults))
+  newOptions.log = options.log || bunyan.createLogger({
+    name: 'search-index',
+    level: newOptions.logLevel
+  })
+  newOptions.indexes = options.indexes || level(newOptions.indexPath, {
+    valueEncoding: 'json',
+    db: newOptions.db
+  })
+  return newOptions;
+}
+
+
+var processBatchOptions = function (siOptions, batchOptions) {
+  var defaultFieldOptions = {
+    filter: false,
+    nGramLength: siOptions.nGramLength,
+    searchable: true,
+    weight: 0,
+    fieldedSearch: siOptions.fieldedSearch
+  }
+  var defaultBatchOptions = {
+    batchName: 'Batch at ' + new Date().toISOString(),
+    fieldOptions: siOptions.fieldOptions || defaultFieldOptions,
+    fieldsToStore: siOptions.fieldsToStore,
+    defaultFieldOptions: defaultFieldOptions
+  }
+  batchOptions = _.defaults(batchOptions || {}, defaultBatchOptions)
+  batchOptions.filters = _.pluck(_.filter(batchOptions.fieldOptions, 'filter'), 'fieldName')
+  if (_.find(batchOptions.fieldOptions, 'fieldName', '*') === -1) {
+    batchOptions.fieldOptions.push(defaultFieldOptions('*'))
+  }
+  return batchOptions
+}

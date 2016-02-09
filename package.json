@@ -1,10 +1,10 @@
 {
   "name": "search-index-adder",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "The indexing module for search-index",
   "main": "indexer.js",
   "scripts": {
-    "test": "tape"
+    "test": "rm -rf test/sandbox && mkdir test/sandbox && tape test/test.js"
   },
   "repository": {
     "type": "git",
@@ -23,11 +23,21 @@
   "homepage": "https://github.com/fergiemcdowall/search-index-adder#readme",
   "dependencies": {
     "async": "^1.5.2",
+    "bunyan": "^1.5.1",
+    "leveldown": "^1.4.4",
+    "levelup": "^1.3.1",
     "lodash": "^3.10.1",
     "log-skeleton": "^1.1.0",
     "object-hash": "^1.1.0",
     "search-index-deleter": "0.0.2",
     "term-frequency": "0.0.3",
     "term-vector": "0.0.12"
+  },
+  "devDependencies": {
+    "distribute-array": "0.0.3",
+    "level-out": "0.0.6",
+    "reuters-21578-json": "0.0.6",
+    "search-index-searcher": "0.0.2",
+    "tape": "^4.4.0"
   }
 }
