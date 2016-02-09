@@ -6,10 +6,13 @@ var test = require('tape');
 var async = require('async');
 
 
+var resultForStarUSA = [ '287', '510', '998', '997', '996', '995', '994', '993', '992', '991' ]
+
+
 test('simple indexing test', function (t) {
   var indexer = sia({indexPath: 'test/sandbox/simpleIndexing'});
   var searcher = sis(indexer.getOptions())
-  t.plan(3);
+  t.plan(4);
   var batch = require('../node_modules/reuters-21578-json/data/full/reuters-000.json')
   t.equal(batch.length, 1000);
   indexer.addBatchToIndex(batch, {}, function(err) {
@@ -18,7 +21,7 @@ test('simple indexing test', function (t) {
     q.query = {'*': ['usa']}
     searcher.search(q, function (err, searchResults) {
       if (!err) t.pass('no errorness')
-      console.log(_.map(searchResults.hits, 'id').slice(0,10))
+      t.deepLooseEqual(_.map(searchResults.hits, 'id').slice(0,10), resultForStarUSA)
     })
   })
 });
@@ -27,7 +30,7 @@ test('simple indexing test', function (t) {
 test('concurrancy test', function (t) {
   var indexer = sia({indexPath: 'test/sandbox/concurrentIndexing'});
   var searcher = sis(indexer.getOptions())
-  t.plan(12);
+  t.plan(13);
   var batchData = da(require('../node_modules/reuters-21578-json/data/full/reuters-000.json'), 10)
   t.equal(batchData.length, 10);
   async.each(batchData, function(batch, callback) {
@@ -42,7 +45,7 @@ test('concurrancy test', function (t) {
     //      not an array
     searcher.search(q, function (err, searchResults) {
       if (!err) t.pass('no errorness')
-      console.log(_.map(searchResults.hits, 'id').slice(0,10))
+      t.deepLooseEqual(_.map(searchResults.hits, 'id').slice(0,10), resultForStarUSA)
     })
   })
 });
