@@ -2,17 +2,17 @@
 const _ = require('lodash');
 
 module.exports = function (options) {
-  var indexer = {};
-  indexer.options = getOptions(options)
+  var Indexer = {};
+  Indexer.options = getOptions(options)
 
   var async = require('async');
-  var deleter = require('search-index-deleter')(indexer.options);
+  var deleter = require('search-index-deleter')(Indexer.options);
   var hash = require('object-hash');
   var tv = require('term-vector');
   var tf = require('term-frequency');
   var skeleton = require('log-skeleton');
 
-  var log = skeleton((indexer.options) ? indexer.options.log : undefined);
+  var log = skeleton((Indexer.options) ? Indexer.options.log : undefined);
 
 
   var q = async.queue(function (batch, callback) {
@@ -33,12 +33,23 @@ module.exports = function (options) {
   }, 1);
 
 
-  indexer.getOptions = function() {
-    return indexer.options
+  Indexer.add = function (batch, batchOptions, callback) {
+    if (arguments.length === 2 && _.isFunction(arguments[1])) {
+      callback = batchOptions
+      batchOptions = undefined
+    }
+    addBatchToIndex(batch,
+                    batchOptions,
+                    callback)
+  }
+
+
+  Indexer.getOptions = function() {
+    return Indexer.options
   }
   
-  indexer.addBatchToIndex = function (batch, batchOptions, callback) {
-    batchOptions = processBatchOptions(indexer.options, batchOptions);
+  var addBatchToIndex = function (batch, batchOptions, callback) {
+    batchOptions = processBatchOptions(Indexer.options, batchOptions);
     if (!_.isArray(batch) && _.isPlainObject(batch)) {
       batch = [batch];
     }
@@ -207,7 +218,7 @@ module.exports = function (options) {
     async.eachSeries(
       dbInstructions,
       function (item, callback) {
-        indexer.options.indexes.get(item.key, function (err, val) {
+        Indexer.options.indexes.get(item.key, function (err, val) {
           if (item.key.substring(0, 2) == 'TF') {
             if (val)
               item.value = item.value.concat(val);
@@ -233,7 +244,7 @@ module.exports = function (options) {
         });
       },
       function (err) {
-        indexer.options.indexes.batch(dbInstructions, function (err) {
+        Indexer.options.indexes.batch(dbInstructions, function (err) {
           if (err) log.warn('Ooops!', err);
           else log.info('batch indexed!');
           return callbackster(null);
@@ -241,7 +252,7 @@ module.exports = function (options) {
       });
   }
 
-  return indexer;
+  return Indexer;
 };
 
 var getOptions = function(options) {
