@@ -1,7 +1,7 @@
 /*jshint -W083 */ //makes jslint overlook functions in lodash for-loops
 const _ = require('lodash');
 
-module.exports = function (options) {
+module.exports = function (options, callback) {
   var Indexer = {};
   Indexer.options = getOptions(options)
 
@@ -252,7 +252,8 @@ module.exports = function (options) {
       });
   }
 
-  return Indexer;
+//  return Indexer;
+  return callback(null, Indexer)
 };
 
 var getOptions = function(options) {
