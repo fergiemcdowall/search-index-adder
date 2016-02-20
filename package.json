@@ -1,6 +1,6 @@
 {
   "name": "search-index-adder",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "The indexing module for search-index",
   "main": "indexer.js",
   "scripts": {
@@ -29,7 +29,7 @@
     "lodash": "^3.10.1",
     "log-skeleton": "^1.1.0",
     "object-hash": "^1.1.0",
-    "search-index-deleter": "0.0.2",
+    "search-index-deleter": "0.0.4",
     "term-frequency": "0.0.3",
     "term-vector": "0.0.12"
   },
@@ -37,7 +37,7 @@
     "distribute-array": "0.0.3",
     "level-out": "0.0.6",
     "reuters-21578-json": "0.0.6",
-    "search-index-searcher": "0.0.2",
+    "search-index-searcher": "0.0.5",
     "tape": "^4.4.0"
   }
 }
