@@ -100,8 +100,6 @@ module.exports = function (givenOptions, callback) {
           value:  _.pick(doc, batchOptions.fieldsToStore)
         });
         var freqsForComposite = []; //put document frequencies in here
-        
-        delete batchOptions.stopwords //sanity
         _.forEach(doc, function (field, fieldName) {
           var fieldOptions = _.defaults(_.find(batchOptions.fieldOptions, ['fieldName', fieldName]) || {}, batchOptions.defaultFieldOptions);
 
