@@ -242,7 +242,7 @@ module.exports = function (givenOptions, callback) {
             });
           },
           function (err) {
-            dbInstructions.push({key: 'lastUpdateTimestamp', value: Date.now()})
+            dbInstructions.push({key: 'LAST-UPDATE-TIMESTAMP', value: Date.now()})
             Indexer.options.indexes.batch(dbInstructions, function (err) {
               if (err) log.warn('Ooops!', err);
               else log.info('batch indexed!');

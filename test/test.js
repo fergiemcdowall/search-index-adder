@@ -51,7 +51,7 @@ test('concurrancy test', function (t) {
           if (!err) t.pass('no errorness')
           t.deepLooseEqual(_.map(searchResults.hits, 'id').slice(0,10), resultForStarUSA)
         })
-        indexer.getOptions().indexes.get('lastUpdateTimestamp', function(err, val) {
+        indexer.getOptions().indexes.get('LAST-UPDATE-TIMESTAMP', function(err, val) {
           t.error(err)
           t.ok((val - startTime) > 0,
                'lastUpdateTimestamp seems reasonable (' + (val - startTime) + ')')
