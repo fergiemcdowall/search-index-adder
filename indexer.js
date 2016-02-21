@@ -9,8 +9,21 @@ var skeleton = require('log-skeleton');
 module.exports = function (givenOptions, callback) {
   var Indexer = {};
   getOptions(givenOptions, function(err, options) {
+    
+    Indexer.close = function (callback) {
+      options.indexes.close(function (err) {
+        while (!options.indexes.isClosed()) {
+          options.log.info('closing...')
+        }
+        if (options.indexes.isClosed()) {
+          options.log.info('closed...')
+          callback(err)
+        }
+      })
+    }
+
+
     Indexer.options = options
-//    console.log(Indexer.options)
     require('search-index-deleter')(Indexer.options, function(err, deleter) {
       var log = skeleton((Indexer.options) ? Indexer.options.log : undefined);
       var q = async.queue(function (batch, callback) {
@@ -87,8 +100,11 @@ module.exports = function (givenOptions, callback) {
           value:  _.pick(doc, batchOptions.fieldsToStore)
         });
         var freqsForComposite = []; //put document frequencies in here
+        
+        delete batchOptions.stopwords //sanity
         _.forEach(doc, function (field, fieldName) {
-          var fieldOptions = _.defaults(_.find(batchOptions.fieldOptions, 'fieldName', fieldName) || {}, batchOptions.defaultFieldOptions);
+          var fieldOptions = _.defaults(_.find(batchOptions.fieldOptions, ['fieldName', fieldName]) || {}, batchOptions.defaultFieldOptions);
+
           if (fieldName == 'id') fieldOptions.stopwords = '';   // because you cant run stopwords on id field
           else fieldOptions.stopwords = batchOptions.stopwords;
           if (_.isArray(field)) field = field.join(' '); // make filter fields searchable
@@ -322,7 +338,7 @@ var processBatchOptions = function (siOptions, batchOptions) {
   }
   batchOptions = _.defaults(batchOptions || {}, defaultBatchOptions)
   batchOptions.filters = _.map(_.filter(batchOptions.fieldOptions, 'filter'), 'fieldName')
-  if (_.find(batchOptions.fieldOptions, 'fieldName', '*') === -1) {
+  if (_.find(batchOptions.fieldOptions, ['fieldName', '*']) === -1) {
     batchOptions.fieldOptions.push(defaultFieldOptions('*'))
   }
   return batchOptions
