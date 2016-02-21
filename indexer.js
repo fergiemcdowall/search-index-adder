@@ -22,7 +22,7 @@ module.exports = function (givenOptions, callback) {
             doc.id = (++salt) + '-' + hash(doc);
           doc.id = doc.id + ''; // stringify ID
         });
-        deleter.deleteBatch(_.pluck(batch.data, 'id'), function (err) {
+        deleter.deleteBatch(_.map(batch.data, 'id'), function (err) {
           if (err) log.info(err);
           addBatch(batch.data, batch.options, function(err) {
             return callback(err);
@@ -176,7 +176,7 @@ module.exports = function (givenOptions, callback) {
         docIndexEntries.push({
           type: 'put',
           key: 'DELETE-DOCUMENT￮' + doc.id,
-          value: _.pluck(docIndexEntries, 'key')
+          value: _.map(docIndexEntries, 'key')
         });
         return docIndexEntries;
       }
@@ -321,7 +321,7 @@ var processBatchOptions = function (siOptions, batchOptions) {
     defaultFieldOptions: defaultFieldOptions
   }
   batchOptions = _.defaults(batchOptions || {}, defaultBatchOptions)
-  batchOptions.filters = _.pluck(_.filter(batchOptions.fieldOptions, 'filter'), 'fieldName')
+  batchOptions.filters = _.map(_.filter(batchOptions.fieldOptions, 'filter'), 'fieldName')
   if (_.find(batchOptions.fieldOptions, 'fieldName', '*') === -1) {
     batchOptions.fieldOptions.push(defaultFieldOptions('*'))
   }
