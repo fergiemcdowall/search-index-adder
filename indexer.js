@@ -238,7 +238,7 @@ module.exports = function (givenOptions, callback) {
               }
               else if (item.key.substring(0, 2) == 'RI') {
                 if (val)
-                  item.value = item.value.concat(val);
+                  item.value = item.value.concat(val);                
                 item.value = item.value.sort(function (a, b) {
                   //sort buy score and then ID, descending:
                   if (b[0] > a[0]) return 1
@@ -249,8 +249,10 @@ module.exports = function (givenOptions, callback) {
                 });
               }
               else if (item.key == 'DOCUMENT-COUNT') {
+                // console.log(val)
                 if (val)
                   item.value = +val + +(item.value);
+                // console.log(item.value)
               }
               return callback(null);
             });
@@ -276,7 +278,6 @@ var getOptions = function(givenOptions, callbacky) {
   const _ = require('lodash')
   const bunyan = require('bunyan')
   var levelup = require('levelup')
-  var leveldown = require('leveldown')
   const tv = require('term-vector')
   givenOptions = givenOptions || {}
   async.parallel([
