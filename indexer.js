@@ -75,11 +75,11 @@ module.exports = function (givenOptions, callback) {
           if (_.isArray(doc[fieldKey])) continue
           else if (doc[fieldKey] === null) {
             delete doc[fieldKey]
-            log.warn(doc.id + ': ' + fieldKey + ' field is null, SKIPPING')
+            log.info(doc.id + ': ' + fieldKey + ' field is null, SKIPPING')
             // only index fields that are strings or numbers
           } else if (!(_.isString(doc[fieldKey]) || _.isNumber(doc[fieldKey]))) {
             delete doc[fieldKey]
-            log.warn(doc.id + ': ' + fieldKey +
+            log.info(doc.id + ': ' + fieldKey +
                      ' field not string or array, SKIPPING')
           }
         }
@@ -110,12 +110,15 @@ module.exports = function (givenOptions, callback) {
             fieldOptions.stopwords = batchOptions.stopwords
           }
           if (_.isArray(field)) field = field.join(' ') // make filter fields searchable
-          var v = tv.getVector(field + '', {
-            separator: fieldOptions.separator,
-            stopwords: fieldOptions.stopwords,
-            nGramLength: fieldOptions.nGramLength
-          })
+
+          var vecOps = {
+            separator: fieldOptions.separator || batchOptions.separator,
+            stopwords: fieldOptions.stopwords || batchOptions.stopwords,
+            nGramLength: fieldOptions.nGramLength || batchOptions.nGramLength
+          }
+          var v = tv.getVector(field + '', vecOps)
           v.push([['*'], 1]) // can do wildcard searh on this field
+          debugger;
           var freq = tf.getTermFrequency(v, {
             scheme: 'doubleLogNormalization0.5',
             weight: fieldOptions.weight
@@ -125,28 +128,29 @@ module.exports = function (givenOptions, callback) {
           }
           if (fieldOptions.fieldedSearch) {
             freq.forEach(function (item) {
+              var token = item[0].join(options.nGramSeparator)
               batchOptions.filters.forEach(function (filter) {
                 _.forEach(doc[filter], function (filterKey) {
                   docIndexEntries.push({
                     type: 'put',
-                    key: 'TF￮' + fieldName + '￮' + item[0] + '￮' + filter + '￮' + filterKey,
+                    key: 'TF￮' + fieldName + '￮' + token + '￮' + filter + '￮' + filterKey,
                     value: [doc.id]
                   })
                   docIndexEntries.push({
                     type: 'put',
-                    key: 'RI￮' + fieldName + '￮' + item[0] + '￮' + filter + '￮' + filterKey,
+                    key: 'RI￮' + fieldName + '￮' + token + '￮' + filter + '￮' + filterKey,
                     value: [[item[1].toFixed(16), doc.id]]
                   })
                 })
               })
               docIndexEntries.push({
                 type: 'put',
-                key: 'TF￮' + fieldName + '￮' + item[0] + '￮￮',
+                key: 'TF￮' + fieldName + '￮' + token + '￮￮',
                 value: [doc.id]
               })
               docIndexEntries.push({
                 type: 'put',
-                key: 'RI￮' + fieldName + '￮' + item[0] + '￮￮',
+                key: 'RI￮' + fieldName + '￮' + token + '￮￮',
                 value: [[item[1].toFixed(16), doc.id]]
               })
             })
@@ -157,9 +161,9 @@ module.exports = function (givenOptions, callback) {
           .flatten()
           .sort()
           .reduce(function (prev, item) {
-            if (!prev[0]) prev.push(item)
-            //            else if (item[0] == _.last(prev)[0]) {
-            else if (_.isEqual(item[0], _.last(prev)[0])) {
+            if (!prev[0]) {
+              prev.push(item)
+            } else if (_.isEqual(item[0], _.last(prev)[0])) {
               _.last(prev)[1] = _.last(prev)[1] + item[1]
             } else {
               prev.push(item)
@@ -167,28 +171,29 @@ module.exports = function (givenOptions, callback) {
             return prev
           }, [])
           .forEach(function (item) {
+            var token = item[0].join(options.nGramSeparator)
             batchOptions.filters.forEach(function (filter) {
               _.forEach(doc[filter], function (filterKey) {
                 docIndexEntries.push({
                   type: 'put',
-                  key: 'TF￮*￮' + item[0] + '￮' + filter + '￮' + filterKey,
+                  key: 'TF￮*￮' + token + '￮' + filter + '￮' + filterKey,
                   value: [doc.id]
                 })
                 docIndexEntries.push({
                   type: 'put',
-                  key: 'RI￮*￮' + item[0] + '￮' + filter + '￮' + filterKey,
+                  key: 'RI￮*￮' + token + '￮' + filter + '￮' + filterKey,
                   value: [[item[1].toFixed(16), doc.id]]
                 })
               })
             })
             docIndexEntries.push({
               type: 'put',
-              key: 'TF￮*￮' + item[0] + '￮￮',
+              key: 'TF￮*￮' + token + '￮￮',
               value: [doc.id]
             })
             docIndexEntries.push({
               type: 'put',
-              key: 'RI￮*￮' + item[0] + '￮￮',
+              key: 'RI￮*￮' + token + '￮￮',
               value: [[item[1].toFixed(16), doc.id]]
             })
           })
@@ -237,7 +242,7 @@ module.exports = function (givenOptions, callback) {
           dbInstructions,
           function (item, callback) {
             Indexer.options.indexes.get(item.key, function (err, val) {
-              if (err) log.warn(err)
+              if (err) log.info(err)
               if (item.key.substring(0, 2) === 'TF') {
                 if (val) {
                   item.value = item.value.concat(val)
@@ -265,10 +270,10 @@ module.exports = function (givenOptions, callback) {
             })
           },
           function (err) {
-            if (err) log.warn(err)
+            if (err) log.info(err)
             dbInstructions.push({key: 'LAST-UPDATE-TIMESTAMP', value: Date.now()})
             Indexer.options.indexes.batch(dbInstructions, function (err) {
-              if (err) log.warn('Ooops!', err)
+              if (err) log.info('Ooops!', err)
               else log.info('batch indexed!')
               return callbackster(null)
             })
@@ -296,6 +301,7 @@ var getOptions = function (givenOptions, callbacky) {
       defaultOps.indexPath = 'si'
       defaultOps.logLevel = 'error'
       defaultOps.nGramLength = 1
+      defaultOps.nGramSeparator = ' '
       defaultOps.separator = /[\|' \.,\-|(\n)]+/
       defaultOps.stopwords = tv.getStopwords('en').sort()
       defaultOps.log = bunyan.createLogger({
