@@ -1,16 +1,14 @@
 const _ = require('lodash')
-var async = require('async')
-var hash = require('object-hash')
-var tv = require('term-vector')
-var tf = require('term-frequency')
-var skeleton = require('log-skeleton')
-var sid = require('search-index-deleter')
+const async = require('async')
+const hash = require('object-hash')
+const sid = require('search-index-deleter')
+const skeleton = require('log-skeleton')
+const tf = require('term-frequency')
+const tv = require('term-vector')
 
 module.exports = function (options, callback) {
-  var Indexer = {}
-  init(options, function(err, newIndexer) {
-    Indexer = newIndexer
-    
+  init(options, function(err, Indexer) {
+    if (err) return callback(err, null)
     // API : add
     Indexer.add = function (batch, batchOptions, callback) {
       if (arguments.length === 2 && _.isFunction(arguments[1])) {
@@ -22,12 +20,10 @@ module.exports = function (options, callback) {
                       Indexer,
                       callback)
     }
-
     // API : close
     Indexer.close = function (callback) {
       close(this.options, callback)
     }
-
     // return new instance of search-index-indexer
     return callback(null, Indexer)
   })
@@ -197,7 +193,6 @@ var getIndexEntries = function (doc, batchOptions, Indexer) {
       fieldOptions.stopwords = batchOptions.stopwords
     }
     if (_.isArray(field)) field = field.join(' ') // make filter fields searchable
-
     var vecOps = {
       separator: fieldOptions.separator || batchOptions.separator,
       stopwords: fieldOptions.stopwords || batchOptions.stopwords,
@@ -215,31 +210,8 @@ var getIndexEntries = function (doc, batchOptions, Indexer) {
     }
     if (fieldOptions.fieldedSearch) {
       freq.forEach(function (item) {
-        var token = item[0].join(Indexer.options.nGramSeparator)
-        batchOptions.filters.forEach(function (filter) {
-          _.forEach(doc[filter], function (filterKey) {
-            docIndexEntries.push({
-              type: 'put',
-              key: 'TF￮' + fieldName + '￮' + token + '￮' + filter + '￮' + filterKey,
-              value: [doc.id]
-            })
-            docIndexEntries.push({
-              type: 'put',
-              key: 'RI￮' + fieldName + '￮' + token + '￮' + filter + '￮' + filterKey,
-              value: [[item[1].toFixed(16), doc.id]]
-            })
-          })
-        })
-        docIndexEntries.push({
-          type: 'put',
-          key: 'TF￮' + fieldName + '￮' + token + '￮￮',
-          value: [doc.id]
-        })
-        docIndexEntries.push({
-          type: 'put',
-          key: 'RI￮' + fieldName + '￮' + token + '￮￮',
-          value: [[item[1].toFixed(16), doc.id]]
-        })
+        docIndexEntries = docIndexEntries.concat(
+          fieldIndexEntries(fieldName, item, Indexer, batchOptions, doc))
       })
     }
   })
@@ -258,31 +230,8 @@ var getIndexEntries = function (doc, batchOptions, Indexer) {
       return prev
     }, [])
     .forEach(function (item) {
-      var token = item[0].join(Indexer.options.nGramSeparator)
-      batchOptions.filters.forEach(function (filter) {
-        _.forEach(doc[filter], function (filterKey) {
-          docIndexEntries.push({
-            type: 'put',
-            key: 'TF￮*￮' + token + '￮' + filter + '￮' + filterKey,
-            value: [doc.id]
-          })
-          docIndexEntries.push({
-            type: 'put',
-            key: 'RI￮*￮' + token + '￮' + filter + '￮' + filterKey,
-            value: [[item[1].toFixed(16), doc.id]]
-          })
-        })
-      })
-      docIndexEntries.push({
-        type: 'put',
-        key: 'TF￮*￮' + token + '￮￮',
-        value: [doc.id]
-      })
-      docIndexEntries.push({
-        type: 'put',
-        key: 'RI￮*￮' + token + '￮￮',
-        value: [[item[1].toFixed(16), doc.id]]
-      })
+      docIndexEntries = docIndexEntries.concat(
+        fieldIndexEntries('*', item, Indexer, batchOptions, doc))
     })
   docIndexEntries.push({
     type: 'put',
@@ -293,7 +242,37 @@ var getIndexEntries = function (doc, batchOptions, Indexer) {
 }
 
 
-function addBatch (batch, batchOptions, Indexer, callbackster) {
+var fieldIndexEntries = function (fieldName, item, Indexer, batchOptions, doc) {
+  var entries = []
+  var token = item[0].join(Indexer.options.nGramSeparator)
+  batchOptions.filters.forEach(function (filter) {
+    _.forEach(doc[filter], function (filterKey) {
+      entries.push({
+        type: 'put',
+        key: 'TF￮' + fieldName + '￮' + token + '￮' + filter + '￮' + filterKey,
+        value: [doc.id]
+      })
+      entries.push({
+        type: 'put',
+        key: 'RI￮' + fieldName + '￮' + token + '￮' + filter + '￮' + filterKey,
+        value: [[item[1].toFixed(16), doc.id]]
+      })
+    })
+  })
+  entries.push({
+    type: 'put',
+    key: 'TF￮' + fieldName + '￮' + token + '￮￮',
+    value: [doc.id]
+  })
+  entries.push({
+    type: 'put',
+    key: 'RI￮' + fieldName + '￮' + token + '￮￮',
+    value: [[item[1].toFixed(16), doc.id]]
+  })
+  return entries
+}
+
+var addBatch = function (batch, batchOptions, Indexer, callbackster) {
   var dbInstructions = []
   batch.forEach(function (doc) {
     dbInstructions.push(getIndexEntries(doc, batchOptions, Indexer))
