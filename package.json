@@ -2,7 +2,7 @@
   "name": "search-index-adder",
   "version": "0.0.14",
   "description": "The indexing module for search-index",
-  "main": "indexer.js",
+  "main": "index.js",
   "scripts": {
     "test": "rm -rf test/sandbox && mkdir test/sandbox && tape test/test.js"
   },
