@@ -5,7 +5,7 @@ var sis = require('search-index-searcher')
 var test = require('tape')
 var async = require('async')
 
-var resultForStarUSA = [ '287', '510', '998', '997', '996', '995', '994', '993', '992', '991' ]
+var resultForStarUSA = [ '510', '287', '998', '997', '996', '995', '994', '993', '992', '991' ]
 
 test('set seperator at field level', function (t) {
   t.plan(5)

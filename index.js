@@ -1,10 +1,25 @@
-const _ = require('lodash')
-var async = require('async')
-var hash = require('object-hash')
-var tv = require('term-vector')
-var tf = require('term-frequency')
-var skeleton = require('log-skeleton')
-var sid = require('search-index-deleter')
+const _defaults = require('lodash.defaults')
+const _forEach = require('lodash.foreach')
+const _filter = require('lodash.filter')
+const _find = require('lodash.find')
+const _flatten = require('lodash.flatten')
+const _isEqual = require('lodash.isequal')
+const _isNumber = require('lodash.isnumber')
+const _isPlainObject = require('lodash.isplainobject')
+const _isString = require('lodash.isstring')
+const _last = require('lodash.last')
+const _map = require('lodash.map')
+const _pick = require('lodash.pick')
+const _reduce = require('lodash.reduce')
+const _sortBy = require('lodash.sortby')
+const async = require('async')
+const bunyan = require('bunyan')
+const hash = require('object-hash')
+const levelup = require('levelup')
+const sid = require('search-index-deleter')
+const skeleton = require('log-skeleton')
+const tf = require('term-frequency')
+const tv = require('term-vector')
 
 module.exports = function (givenOptions, callback) {
   var Indexer = {}
@@ -31,7 +46,7 @@ module.exports = function (givenOptions, callback) {
       }
       var log = skeleton((Indexer.options) ? Indexer.options.log : undefined)
       var q = async.queue(function (batch, callback) {
-        batch.options = _.defaults(batch.options, options)
+        batch.options = _defaults(batch.options, options)
         // generate IDs if none are present and stringify numeric IDs
         var salt = 0
         batch.data.map(function (doc) {
@@ -40,7 +55,7 @@ module.exports = function (givenOptions, callback) {
           }
           doc.id = doc.id + '' // stringify ID
         })
-        deleter.deleteBatch(_.map(batch.data, 'id'), function (err) {
+        deleter.deleteBatch(_map(batch.data, 'id'), function (err) {
           if (err) log.info(err)
           addBatch(batch.data, batch.options, function (err) {
             return callback(err)
@@ -49,7 +64,7 @@ module.exports = function (givenOptions, callback) {
       }, 1)
 
       Indexer.add = function (batch, batchOptions, callback) {
-        if (arguments.length === 2 && _.isFunction(arguments[1])) {
+        if (arguments.length === 2 && (typeof arguments[1] === 'function')) {
           callback = batchOptions
           batchOptions = undefined
         }
@@ -64,7 +79,7 @@ module.exports = function (givenOptions, callback) {
 
       var addBatchToIndex = function (batch, batchOptions, callback) {
         batchOptions = processBatchOptions(Indexer.options, batchOptions)
-        if (!_.isArray(batch) && _.isPlainObject(batch)) {
+        if (!Array.isArray(batch) && _isPlainObject(batch)) {
           batch = [batch]
         }
         q.push({data: batch, options: batchOptions}, callback)
@@ -72,12 +87,12 @@ module.exports = function (givenOptions, callback) {
 
       var removeInvalidFields = function (doc) {
         for (var fieldKey in doc) {
-          if (_.isArray(doc[fieldKey])) continue
+          if (Array.isArray(doc[fieldKey])) continue
           else if (doc[fieldKey] === null) {
             delete doc[fieldKey]
             log.info(doc.id + ': ' + fieldKey + ' field is null, SKIPPING')
             // only index fields that are strings or numbers
-          } else if (!(_.isString(doc[fieldKey]) || _.isNumber(doc[fieldKey]))) {
+          } else if (!(_isString(doc[fieldKey]) || _isNumber(doc[fieldKey]))) {
             delete doc[fieldKey]
             log.info(doc.id + ': ' + fieldKey +
                      ' field not string or array, SKIPPING')
@@ -88,7 +103,7 @@ module.exports = function (givenOptions, callback) {
 
       function getIndexEntries (doc, batchOptions) {
         var docIndexEntries = []
-        if (!_.isPlainObject(doc)) {
+        if (!_isPlainObject(doc)) {
           return callback(new Error('Malformed document'), {})
         }
         doc = removeInvalidFields(doc)
@@ -99,17 +114,17 @@ module.exports = function (givenOptions, callback) {
         docIndexEntries.push({
           type: 'put',
           key: 'DOCUMENT￮' + doc.id + '￮',
-          value: _.pick(doc, batchOptions.fieldsToStore)
+          value: _pick(doc, batchOptions.fieldsToStore)
         })
         var freqsForComposite = [] // put document frequencies in here
-        _.forEach(doc, function (field, fieldName) {
-          var fieldOptions = _.defaults(_.find(batchOptions.fieldOptions, ['fieldName', fieldName]) || {}, batchOptions.defaultFieldOptions)
+        _forEach(doc, function (field, fieldName) {
+          var fieldOptions = _defaults(_find(batchOptions.fieldOptions, ['fieldName', fieldName]) || {}, batchOptions.defaultFieldOptions)
           if (fieldName === 'id') {
             fieldOptions.stopwords = '' // because you cant run stopwords on id field
           } else {
             fieldOptions.stopwords = batchOptions.stopwords
           }
-          if (_.isArray(field)) field = field.join(' ') // make filter fields searchable
+          if (Array.isArray(field)) field = field.join(' ') // make filter fields searchable
 
           var vecOps = {
             separator: fieldOptions.separator || batchOptions.separator,
@@ -130,7 +145,7 @@ module.exports = function (givenOptions, callback) {
             freq.forEach(function (item) {
               var token = item[0].join(options.nGramSeparator)
               batchOptions.filters.forEach(function (filter) {
-                _.forEach(doc[filter], function (filterKey) {
+                _forEach(doc[filter], function (filterKey) {
                   docIndexEntries.push({
                     type: 'put',
                     key: 'TF￮' + fieldName + '￮' + token + '￮' + filter + '￮' + filterKey,
@@ -157,50 +172,91 @@ module.exports = function (givenOptions, callback) {
           }
         })
         // generate * field
-        _(freqsForComposite)
-          .flatten()
-          .sort()
-          .reduce(function (prev, item) {
-            if (!prev[0]) {
-              prev.push(item)
-            } else if (_.isEqual(item[0], _.last(prev)[0])) {
-              _.last(prev)[1] = _.last(prev)[1] + item[1]
-            } else {
-              prev.push(item)
-            }
-            return prev
-          }, [])
-          .forEach(function (item) {
-            var token = item[0].join(options.nGramSeparator)
-            batchOptions.filters.forEach(function (filter) {
-              _.forEach(doc[filter], function (filterKey) {
-                docIndexEntries.push({
-                  type: 'put',
-                  key: 'TF￮*￮' + token + '￮' + filter + '￮' + filterKey,
-                  value: [doc.id]
-                })
-                docIndexEntries.push({
-                  type: 'put',
-                  key: 'RI￮*￮' + token + '￮' + filter + '￮' + filterKey,
-                  value: [[item[1].toFixed(16), doc.id]]
-                })
+        
+        // _(freqsForComposite)
+        //   .flatten()
+        //   .sort()
+        //   .reduce(function (prev, item) {
+        //     if (!prev[0]) {
+        //       prev.push(item)
+        //     } else if (_isEqual(item[0], _last(prev)[0])) {
+        //       _last(prev)[1] = _last(prev)[1] + item[1]
+        //     } else {
+        //       prev.push(item)
+        //     }
+        //     return prev
+        //   }, [])
+          // .forEach(function (item) {
+          //   var token = item[0].join(options.nGramSeparator)
+          //   batchOptions.filters.forEach(function (filter) {
+          //     _forEach(doc[filter], function (filterKey) {
+          //       docIndexEntries.push({
+          //         type: 'put',
+          //         key: 'TF￮*￮' + token + '￮' + filter + '￮' + filterKey,
+          //         value: [doc.id]
+          //       })
+          //       docIndexEntries.push({
+          //         type: 'put',
+          //         key: 'RI￮*￮' + token + '￮' + filter + '￮' + filterKey,
+          //         value: [[item[1].toFixed(16), doc.id]]
+          //       })
+          //     })
+          //   })
+          //   docIndexEntries.push({
+          //     type: 'put',
+          //     key: 'TF￮*￮' + token + '￮￮',
+          //     value: [doc.id]
+          //   })
+          //   docIndexEntries.push({
+          //     type: 'put',
+          //     key: 'RI￮*￮' + token + '￮￮',
+          //     value: [[item[1].toFixed(16), doc.id]]
+          //   })
+          // })
+
+
+        freqsForComposite = _flatten(freqsForComposite).sort()
+        freqsForComposite = _reduce(freqsForComposite, function (prev, item) {
+          if (!prev[0]) {
+            prev.push(item)
+          } else if (_isEqual(item[0], _last(prev)[0])) {
+            _last(prev)[1] = _last(prev)[1] + item[1]
+          } else {
+            prev.push(item)
+          }
+          return prev
+        }, [])
+        freqsForComposite = _forEach(freqsForComposite, function (item) {
+          var token = item[0].join(options.nGramSeparator)
+          batchOptions.filters.forEach(function (filter) {
+            _forEach(doc[filter], function (filterKey) {
+              docIndexEntries.push({
+                type: 'put',
+                key: 'TF￮*￮' + token + '￮' + filter + '￮' + filterKey,
+                value: [doc.id]
+              })
+              docIndexEntries.push({
+                type: 'put',
+                key: 'RI￮*￮' + token + '￮' + filter + '￮' + filterKey,
+                value: [[item[1].toFixed(16), doc.id]]
               })
             })
-            docIndexEntries.push({
-              type: 'put',
-              key: 'TF￮*￮' + token + '￮￮',
-              value: [doc.id]
-            })
-            docIndexEntries.push({
-              type: 'put',
-              key: 'RI￮*￮' + token + '￮￮',
-              value: [[item[1].toFixed(16), doc.id]]
-            })
           })
+          docIndexEntries.push({
+            type: 'put',
+            key: 'TF￮*￮' + token + '￮￮',
+            value: [doc.id]
+          })
+          docIndexEntries.push({
+            type: 'put',
+            key: 'RI￮*￮' + token + '￮￮',
+            value: [[item[1].toFixed(16), doc.id]]
+          })
+        })
         docIndexEntries.push({
           type: 'put',
           key: 'DELETE-DOCUMENT￮' + doc.id,
-          value: _.map(docIndexEntries, 'key')
+          value: _map(docIndexEntries, 'key')
         })
         return docIndexEntries
       }
@@ -215,29 +271,54 @@ module.exports = function (givenOptions, callback) {
           key: 'DOCUMENT-COUNT',
           value: batch.length
         })
-        dbInstructions = _(dbInstructions)
-          .flatten()
-          .sortBy('key')
-          .reduce(function (prev, item) {
-            if (item.key.substring(0, 6) === 'DELETE') {
+
+        dbInstructions = _flatten(dbInstructions)
+        dbInstructions = _sortBy(dbInstructions, 'key')
+        dbInstructions = _reduce(dbInstructions, function (prev, item) {
+          if (item.key.substring(0, 6) === 'DELETE') {
+            prev.push(item)
+          } else if (item.key.substring(0, 8) === 'DOCUMENT') {
+            prev.push(item)
+          } else if (item.key.substring(0, 2) === 'RI') {
+            if (item.key === _last(prev).key) {
+              _last(prev).value.push(item.value[0])
+            } else {
               prev.push(item)
-            } else if (item.key.substring(0, 8) === 'DOCUMENT') {
-              prev.push(item)
-            } else if (item.key.substring(0, 2) === 'RI') {
-              if (item.key === _.last(prev).key) {
-                _.last(prev).value.push(item.value[0])
-              } else {
-                prev.push(item)
-              }
-            } else if (item.key.substring(0, 2) === 'TF') {
-              if (item.key === _.last(prev).key) {
-                _.last(prev).value = _.last(prev).value.concat(item.value)
-              } else {
-                prev.push(item)
-              }
             }
-            return prev
-          }, [])
+          } else if (item.key.substring(0, 2) === 'TF') {
+            if (item.key === _last(prev).key) {
+              _last(prev).value = _last(prev).value.concat(item.value)
+            } else {
+              prev.push(item)
+            }
+          }
+          return prev
+        }, [])
+
+        // dbInstructions = _(dbInstructions)
+        //   .flatten()
+        //   .sortBy('key')
+        //   .reduce(function (prev, item) {
+        //     if (item.key.substring(0, 6) === 'DELETE') {
+        //       prev.push(item)
+        //     } else if (item.key.substring(0, 8) === 'DOCUMENT') {
+        //       prev.push(item)
+        //     } else if (item.key.substring(0, 2) === 'RI') {
+        //       if (item.key === _last(prev).key) {
+        //         _last(prev).value.push(item.value[0])
+        //       } else {
+        //         prev.push(item)
+        //       }
+        //     } else if (item.key.substring(0, 2) === 'TF') {
+        //       if (item.key === _last(prev).key) {
+        //         _last(prev).value = _last(prev).value.concat(item.value)
+        //       } else {
+        //         prev.push(item)
+        //       }
+        //     }
+        //     return prev
+        //   }, [])
+
         async.eachSeries(
           dbInstructions,
           function (item, callback) {
@@ -286,14 +367,10 @@ module.exports = function (givenOptions, callback) {
   })
 }
 
-var getOptions = function (givenOptions, callbacky) {
-  const _ = require('lodash')
-  const bunyan = require('bunyan')
-  var levelup = require('levelup')
-  const tv = require('term-vector')
+var getOptions = function(givenOptions, callbacky) {
   givenOptions = givenOptions || {}
   async.parallel([
-    function (callback) {
+    function(callback) {
       var defaultOps = {}
       defaultOps.deletable = true
       defaultOps.fieldedSearch = true
@@ -310,21 +387,21 @@ var getOptions = function (givenOptions, callbacky) {
       })
       callback(null, defaultOps)
     },
-    function (callback) {
+    function(callback){
       if (!givenOptions.indexes) {
         levelup(givenOptions.indexPath || 'si', {
           valueEncoding: 'json'
-        }, function (err, db) {
-          callback(err, db)
+        }, function(err, db) {
+          callback(null, db)          
         })
-      } else {
+      }
+      else {
         callback(null, null)
       }
     }
-  ], function (err, results) {
-    var options = _.defaults(givenOptions, results[0])
+  ], function(err, results){
+    var options = _defaults(givenOptions, results[0])
     if (results[1] != null) {
-      //      options = _.defaults(options, results[1])
       options.indexes = results[1]
     }
     return callbacky(err, options)
@@ -345,9 +422,9 @@ var processBatchOptions = function (siOptions, batchOptions) {
     fieldsToStore: siOptions.fieldsToStore,
     defaultFieldOptions: defaultFieldOptions
   }
-  batchOptions = _.defaults(batchOptions || {}, defaultBatchOptions)
-  batchOptions.filters = _.map(_.filter(batchOptions.fieldOptions, 'filter'), 'fieldName')
-  if (_.find(batchOptions.fieldOptions, ['fieldName', '*']) === -1) {
+  batchOptions = _defaults(batchOptions || {}, defaultBatchOptions)
+  batchOptions.filters = _map(_filter(batchOptions.fieldOptions, 'filter'), 'fieldName')
+  if (_find(batchOptions.fieldOptions, ['fieldName', '*']) === -1) {
     batchOptions.fieldOptions.push(defaultFieldOptions('*'))
   }
   return batchOptions
