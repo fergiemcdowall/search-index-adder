@@ -49,6 +49,7 @@
   "devDependencies": {
     "distribute-array": "0.0.3",
     "level-out": "0.0.6",
+    "lodash": "^4.8.2",
     "reuters-21578-json": "0.0.6",
     "search-index-searcher": "0.0.5",
     "standard": "^6.0.8",
