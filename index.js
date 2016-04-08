@@ -145,6 +145,10 @@ module.exports = function (givenOptions, callback) {
             freq.forEach(function (item) {
               var token = item[0].join(options.nGramSeparator)
               batchOptions.filters.forEach(function (filter) {
+                //allow filtering on fields that are not formatted as Arrays
+                if (!Array.isArray(doc[filter])) {
+                  doc[filter] = [doc[filter]]
+                }
                 _forEach(doc[filter], function (filterKey) {
                   docIndexEntries.push({
                     type: 'put',
