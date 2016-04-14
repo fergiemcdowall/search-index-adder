@@ -150,16 +150,20 @@ module.exports = function (givenOptions, callback) {
                   doc[filter] = [doc[filter]]
                 }
                 _forEach(doc[filter], function (filterKey) {
-                  docIndexEntries.push({
-                    type: 'put',
-                    key: 'TF￮' + fieldName + '￮' + token + '￮' + filter + '￮' + filterKey,
-                    value: [doc.id]
-                  })
-                  docIndexEntries.push({
-                    type: 'put',
-                    key: 'RI￮' + fieldName + '￮' + token + '￮' + filter + '￮' + filterKey,
-                    value: [[item[1].toFixed(16), doc.id]]
-                  })
+
+                  if ((filterKey !== 'undefined') && (filterKey !== undefined)) {
+                    docIndexEntries.push({
+                      type: 'put',
+                      key: 'TF￮' + fieldName + '￮' + token + '￮' + filter + '￮' + filterKey,
+                      value: [doc.id]
+                    })
+                    docIndexEntries.push({
+                      type: 'put',
+                      key: 'RI￮' + fieldName + '￮' + token + '￮' + filter + '￮' + filterKey,
+                      value: [[item[1].toFixed(16), doc.id]]
+                    })
+                  }
+
                 })
               })
               docIndexEntries.push({
@@ -175,49 +179,6 @@ module.exports = function (givenOptions, callback) {
             })
           }
         })
-        // generate * field
-        
-        // _(freqsForComposite)
-        //   .flatten()
-        //   .sort()
-        //   .reduce(function (prev, item) {
-        //     if (!prev[0]) {
-        //       prev.push(item)
-        //     } else if (_isEqual(item[0], _last(prev)[0])) {
-        //       _last(prev)[1] = _last(prev)[1] + item[1]
-        //     } else {
-        //       prev.push(item)
-        //     }
-        //     return prev
-        //   }, [])
-          // .forEach(function (item) {
-          //   var token = item[0].join(options.nGramSeparator)
-          //   batchOptions.filters.forEach(function (filter) {
-          //     _forEach(doc[filter], function (filterKey) {
-          //       docIndexEntries.push({
-          //         type: 'put',
-          //         key: 'TF￮*￮' + token + '￮' + filter + '￮' + filterKey,
-          //         value: [doc.id]
-          //       })
-          //       docIndexEntries.push({
-          //         type: 'put',
-          //         key: 'RI￮*￮' + token + '￮' + filter + '￮' + filterKey,
-          //         value: [[item[1].toFixed(16), doc.id]]
-          //       })
-          //     })
-          //   })
-          //   docIndexEntries.push({
-          //     type: 'put',
-          //     key: 'TF￮*￮' + token + '￮￮',
-          //     value: [doc.id]
-          //   })
-          //   docIndexEntries.push({
-          //     type: 'put',
-          //     key: 'RI￮*￮' + token + '￮￮',
-          //     value: [[item[1].toFixed(16), doc.id]]
-          //   })
-          // })
-
 
         freqsForComposite = _flatten(freqsForComposite).sort()
         freqsForComposite = _reduce(freqsForComposite, function (prev, item) {
@@ -234,16 +195,18 @@ module.exports = function (givenOptions, callback) {
           var token = item[0].join(options.nGramSeparator)
           batchOptions.filters.forEach(function (filter) {
             _forEach(doc[filter], function (filterKey) {
-              docIndexEntries.push({
-                type: 'put',
-                key: 'TF￮*￮' + token + '￮' + filter + '￮' + filterKey,
-                value: [doc.id]
-              })
-              docIndexEntries.push({
-                type: 'put',
-                key: 'RI￮*￮' + token + '￮' + filter + '￮' + filterKey,
-                value: [[item[1].toFixed(16), doc.id]]
-              })
+              if ((filterKey !== 'undefined') && (filterKey !== undefined)) {
+                docIndexEntries.push({
+                  type: 'put',
+                  key: 'TF￮*￮' + token + '￮' + filter + '￮' + filterKey,
+                  value: [doc.id]
+                })
+                docIndexEntries.push({
+                  type: 'put',
+                  key: 'RI￮*￮' + token + '￮' + filter + '￮' + filterKey,
+                  value: [[item[1].toFixed(16), doc.id]]
+                })
+              }
             })
           })
           docIndexEntries.push({
