@@ -17,213 +17,102 @@ const bunyan = require('bunyan')
 const hash = require('object-hash')
 const levelup = require('levelup')
 const sid = require('search-index-deleter')
-const skeleton = require('log-skeleton')
 const tf = require('term-frequency')
 const tv = require('term-vector')
 
-
 module.exports = function (givenOptions, callback) {
   var Indexer = {}
-
-  
-
-  getOptions(givenOptions, function (err, options) {
+  // initialize deleter and options
+  async.series([
+    function (callback) {
+      getOptions(givenOptions, function (err, options) {
+        Indexer.options = options
+        return callback(err, options)
+      })
+    },
+    function (callback) {
+      sid(Indexer.options, function (err, deleter) {
+        Indexer.deleter = deleter
+        return callback(err, deleter)
+      })
+    }
+  ], function (err, results) {
     if (err) {
       return callback(err, null)
     }
-    Indexer.options = options
 
-    // Indexer.getOptions = function () {
-    //   return Indexer.options
-    // }
-
-
-    Indexer.close = function (callback) {
-      options.indexes.close(function (err) {
-        while (!options.indexes.isClosed()) {
-          options.log.info('closing...')
+    // every batch is put into an internal queue, so that if callbacks
+    // are not honoured when add-ing, index still adds batches
+    // sequentially
+    Indexer.q = async.queue(function (batch, callback) {
+      batch.options = _defaults(batch.options, Indexer.options)
+      // generate IDs if none are present and stringify numeric IDs
+      var salt = 0
+      batch.data.map(function (doc) {
+        if (!doc.id) {
+          doc.id = (++salt) + '-' + hash(doc)
         }
-        if (options.indexes.isClosed()) {
-          options.log.info('closed...')
+        doc.id = doc.id + '' // stringify ID
+      })
+      // before adding new docs, deleter checks the index to see if
+      // documents with the same id exists and then deletes them
+      Indexer.deleter.deleteBatch(_map(batch.data, 'id'), function (err) {
+        if (err) Indexer.options.log.info(err)
+        // docs are now deleted if they existed, new docs can be added
+        addBatch(batch.data, batch.options, Indexer.options, function (err) {
+          return callback(err)
+        })
+      })
+    }, 1)
+
+    // API call close()
+    Indexer.close = function (callback) {
+      Indexer.options.indexes.close(function (err) {
+        while (!Indexer.options.indexes.isClosed()) {
+          Indexer.options.log.info('closing...')
+        }
+        if (Indexer.options.indexes.isClosed()) {
+          Indexer.options.log.info('closed...')
           callback(err)
         }
       })
     }
 
-
-    sid(Indexer.options, function (err, deleter) {
-      if (err) {
-        callback(err, null)
+    // API call add()
+    Indexer.add = function (batch, batchOptions, callback) {
+      if (arguments.length === 2 && (typeof arguments[1] === 'function')) {
+        callback = batchOptions
+        batchOptions = undefined
       }
-      var log = skeleton((Indexer.options) ? Indexer.options.log : undefined)
-      var q = async.queue(function (batch, callback) {
-        batch.options = _defaults(batch.options, options)
-        // generate IDs if none are present and stringify numeric IDs
-        var salt = 0
-        batch.data.map(function (doc) {
-          if (!doc.id) {
-            doc.id = (++salt) + '-' + hash(doc)
-          }
-          doc.id = doc.id + '' // stringify ID
-        })
-        deleter.deleteBatch(_map(batch.data, 'id'), function (err) {
-          if (err) log.info(err)
-          addBatch(batch.data, batch.options, Indexer.options, function (err) {
-            return callback(err)
-          })
-        })
-      }, 1)
+      addBatchToIndex(Indexer.q,
+        batch,
+        batchOptions,
+        Indexer.options,
+        callback)
+    }
 
-      Indexer.add = function (batch, batchOptions, callback) {
-        if (arguments.length === 2 && (typeof arguments[1] === 'function')) {
-          callback = batchOptions
-          batchOptions = undefined
-        }
-        addBatchToIndex(q,
-                        batch,
-                        batchOptions,
-                        Indexer.options,
-                        callback)
-      }
-
-      //  return Indexer
-      return callback(null, Indexer)
-    })
+    //  return Indexer
+    return callback(null, Indexer)
   })
 }
 
-
-var getIndexEntries = function (doc, batchOptions, indexerOptions) {
-  var docIndexEntries = []
-  if (!_isPlainObject(doc)) {
-    return callback(new Error('Malformed document'), {})
+// Take a batch (array of documents to be indexed) and add it to the
+// indexing queue. Batch options and indexing options are honoured
+var addBatchToIndex = function (q, batch, batchOptions, indexerOptions, callback) {
+  batchOptions = processBatchOptions(indexerOptions, batchOptions)
+  if (!Array.isArray(batch) && _isPlainObject(batch)) {
+    batch = [batch]
   }
-  doc = removeInvalidFields(doc)
-  if (batchOptions.fieldsToStore === 'all') {
-    batchOptions.fieldsToStore = Object.keys(doc)
-  }
-  indexerOptions.log.info('indexing ' + doc.id)
-  docIndexEntries.push({
-    type: 'put',
-    key: 'DOCUMENT￮' + doc.id + '￮',
-    value: _pick(doc, batchOptions.fieldsToStore)
-  })
-  var freqsForComposite = [] // put document frequencies in here
-  _forEach(doc, function (field, fieldName) {
-    var fieldOptions = _defaults(_find(batchOptions.fieldOptions, ['fieldName', fieldName]) || {}, batchOptions.defaultFieldOptions)
-    if (fieldName === 'id') {
-      fieldOptions.stopwords = '' // because you cant run stopwords on id field
-    } else {
-      fieldOptions.stopwords = batchOptions.stopwords
-    }
-    if (Array.isArray(field)) field = field.join(' ') // make filter fields searchable
-
-    var vecOps = {
-      separator: fieldOptions.separator || batchOptions.separator,
-      stopwords: fieldOptions.stopwords || batchOptions.stopwords,
-      nGramLength: fieldOptions.nGramLength || batchOptions.nGramLength
-    }
-    var v = tv.getVector(field + '', vecOps)
-    //          v.push([['*'], 1]) // can do wildcard searh on this field
-    var freq = tf.getTermFrequency(v, {
-      scheme: 'doubleLogNormalization0.5',
-      weight: fieldOptions.weight
-    })
-    freq.push([ [ '*' ], 0 ] )  // can do wildcard searh on this field
-    if (fieldOptions.searchable) {
-      freqsForComposite.push(freq)
-    }
-    if (fieldOptions.fieldedSearch) {
-      freq.forEach(function (item) {
-        var token = item[0].join(indexerOptions.nGramSeparator)
-        batchOptions.filters.forEach(function (filter) {
-          //allow filtering on fields that are not formatted as Arrays
-          if (!Array.isArray(doc[filter])) {
-            doc[filter] = [doc[filter]]
-          }
-          _forEach(doc[filter], function (filterKey) {
-
-            if ((filterKey !== 'undefined') && (filterKey !== undefined)) {
-              docIndexEntries.push({
-                type: 'put',
-                key: 'TF￮' + fieldName + '￮' + token + '￮' + filter + '￮' + filterKey,
-                value: [doc.id]
-              })
-              docIndexEntries.push({
-                type: 'put',
-                key: 'RI￮' + fieldName + '￮' + token + '￮' + filter + '￮' + filterKey,
-                value: [[item[1].toFixed(16), doc.id]]
-              })
-            }
-
-          })
-        })
-        docIndexEntries.push({
-          type: 'put',
-          key: 'TF￮' + fieldName + '￮' + token + '￮￮',
-          value: [doc.id]
-        })
-        docIndexEntries.push({
-          type: 'put',
-          key: 'RI￮' + fieldName + '￮' + token + '￮￮',
-          value: [[item[1].toFixed(16), doc.id]]
-        })
-      })
-    }
-  })
-
-  freqsForComposite = _flatten(freqsForComposite).sort()
-  freqsForComposite = _reduce(freqsForComposite, function (prev, item) {
-    if (!prev[0]) {
-      prev.push(item)
-    } else if (_isEqual(item[0], _last(prev)[0])) {
-      _last(prev)[1] = _last(prev)[1] + item[1]
-    } else {
-      prev.push(item)
-    }
-    return prev
-  }, [])
-  freqsForComposite = _forEach(freqsForComposite, function (item) {
-    var token = item[0].join(indexerOptions.nGramSeparator)
-    batchOptions.filters.forEach(function (filter) {
-      _forEach(doc[filter], function (filterKey) {
-        if ((filterKey !== 'undefined') && (filterKey !== undefined)) {
-          docIndexEntries.push({
-            type: 'put',
-            key: 'TF￮*￮' + token + '￮' + filter + '￮' + filterKey,
-            value: [doc.id]
-          })
-          docIndexEntries.push({
-            type: 'put',
-            key: 'RI￮*￮' + token + '￮' + filter + '￮' + filterKey,
-            value: [[item[1].toFixed(16), doc.id]]
-          })
-        }
-      })
-    })
-    docIndexEntries.push({
-      type: 'put',
-      key: 'TF￮*￮' + token + '￮￮',
-      value: [doc.id]
-    })
-    docIndexEntries.push({
-      type: 'put',
-      key: 'RI￮*￮' + token + '￮￮',
-      value: [[item[1].toFixed(16), doc.id]]
-    })
-  })
-  docIndexEntries.push({
-    type: 'put',
-    key: 'DELETE-DOCUMENT￮' + doc.id,
-    value: _map(docIndexEntries, 'key')
-  })
-  return docIndexEntries
+  q.push({data: batch, options: batchOptions}, callback)
 }
 
-
+// Add this batch to the index respecting batch options and indexing
+// options
 var addBatch = function (batch, batchOptions, indexerOptions, callbackster) {
   var dbInstructions = []
   batch.forEach(function (doc) {
+    // get database instructions for every doc. Instructions are keys
+    // that must be added for every doc
     dbInstructions.push(getIndexEntries(doc, batchOptions, indexerOptions))
   })
   dbInstructions.push({
@@ -232,6 +121,8 @@ var addBatch = function (batch, batchOptions, indexerOptions, callbackster) {
     value: batch.length
   })
 
+  // dbInstructions contains lots of duplicate keys. Reduce the array
+  // so that all keys are unique
   dbInstructions = _flatten(dbInstructions)
   dbInstructions = _sortBy(dbInstructions, 'key')
   dbInstructions = _reduce(dbInstructions, function (prev, item) {
@@ -254,7 +145,6 @@ var addBatch = function (batch, batchOptions, indexerOptions, callbackster) {
     }
     return prev
   }, [])
-
 
   async.eachSeries(
     dbInstructions,
@@ -288,13 +178,12 @@ var addBatch = function (batch, batchOptions, indexerOptions, callbackster) {
       })
     },
     function (err) {
-      if (err) log.info(err)
+      if (err) indexerOptions.log.info(err)
       dbInstructions.push({key: 'LAST-UPDATE-TIMESTAMP', value: Date.now()})
       indexerOptions.indexes.batch(dbInstructions, function (err) {
         if (err) {
           indexerOptions.log.info('Ooops!', err)
-        }
-        else {
+        } else {
           indexerOptions.log.info('batch indexed!')
         }
         return callbackster(null)
@@ -302,35 +191,137 @@ var addBatch = function (batch, batchOptions, indexerOptions, callbackster) {
     })
 }
 
-var addBatchToIndex = function (q, batch, batchOptions, indexerOptions, callback) {
-  batchOptions = processBatchOptions(indexerOptions, batchOptions)
-  if (!Array.isArray(batch) && _isPlainObject(batch)) {
-    batch = [batch]
+// get all index keys that this document will be added to
+var getIndexEntries = function (doc, batchOptions, indexerOptions) {
+  var docIndexEntries = []
+  // if (!_isPlainObject(doc)) {
+  //   return callback(new Error('Malformed document'), {})
+  // }
+  doc = removeInvalidFields(doc, indexerOptions)
+  if (batchOptions.fieldsToStore === 'all') {
+    batchOptions.fieldsToStore = Object.keys(doc)
   }
-  q.push({data: batch, options: batchOptions}, callback)
+  indexerOptions.log.info('indexing ' + doc.id)
+  docIndexEntries.push({
+    type: 'put',
+    key: 'DOCUMENT￮' + doc.id + '￮',
+    value: _pick(doc, batchOptions.fieldsToStore)
+  })
+  var freqsForComposite = [] // put document frequencies in here
+  _forEach(doc, function (field, fieldName) {
+    var fieldOptions = _defaults(_find(batchOptions.fieldOptions, ['fieldName', fieldName]) || {}, batchOptions.defaultFieldOptions)
+    if (fieldName === 'id') {
+      fieldOptions.stopwords = '' // because you cant run stopwords on id field
+    } else {
+      fieldOptions.stopwords = batchOptions.stopwords
+    }
+    if (Array.isArray(field)) field = field.join(' ') // make filter fields searchable
+
+    var vecOps = {
+      separator: fieldOptions.separator || batchOptions.separator,
+      stopwords: fieldOptions.stopwords || batchOptions.stopwords,
+      nGramLength: fieldOptions.nGramLength || batchOptions.nGramLength
+    }
+    var v = tv.getVector(field + '', vecOps)
+    var freq = tf.getTermFrequency(v, {
+      scheme: 'doubleLogNormalization0.5',
+      weight: fieldOptions.weight
+    })
+    freq.push([ [ '*' ], 0 ]) // can do wildcard searh on this field
+    if (fieldOptions.searchable) {
+      freqsForComposite.push(freq)
+    }
+    if (fieldOptions.fieldedSearch) {
+      freq.forEach(function (item) {
+        var token = item[0].join(indexerOptions.nGramSeparator)
+        getKeys(batchOptions, docIndexEntries, doc, token, item, fieldName)
+      })
+    }
+  })
+  freqsForComposite = _flatten(freqsForComposite).sort()
+  freqsForComposite = _reduce(freqsForComposite, function (prev, item) {
+    if (!prev[0]) {
+      prev.push(item)
+    } else if (_isEqual(item[0], _last(prev)[0])) {
+      _last(prev)[1] = _last(prev)[1] + item[1]
+    } else {
+      prev.push(item)
+    }
+    return prev
+  }, [])
+  freqsForComposite = _forEach(freqsForComposite, function (item) {
+    var token = item[0].join(indexerOptions.nGramSeparator)
+    getKeys(batchOptions, docIndexEntries, doc, token, item, '*')
+  })
+
+  docIndexEntries.push({
+    type: 'put',
+    key: 'DELETE-DOCUMENT￮' + doc.id,
+    value: _map(docIndexEntries, 'key')
+  })
+  return docIndexEntries
 }
 
-var removeInvalidFields = function (doc) {
+var getKeys = function (batchOptions,
+  docIndexEntries,
+  doc,
+  token,
+  item,
+  fieldName) {
+  batchOptions.filters.forEach(function (filter) {
+    // allow filtering on fields that are not formatted as Arrays
+    if (!Array.isArray(doc[filter])) {
+      doc[filter] = [doc[filter]]
+    }
+    _forEach(doc[filter], function (filterKey) {
+      if ((filterKey !== 'undefined') && (filterKey !== undefined)) {
+        docIndexEntries.push({
+          type: 'put',
+          key: 'TF￮' + fieldName + '￮' + token + '￮' + filter + '￮' + filterKey,
+          value: [doc.id]
+        })
+        docIndexEntries.push({
+          type: 'put',
+          key: 'RI￮' + fieldName + '￮' + token + '￮' + filter + '￮' + filterKey,
+          value: [[item[1].toFixed(16), doc.id]]
+        })
+      }
+    })
+  })
+  docIndexEntries.push({
+    type: 'put',
+    key: 'TF￮' + fieldName + '￮' + token + '￮￮',
+    value: [doc.id]
+  })
+  docIndexEntries.push({
+    type: 'put',
+    key: 'RI￮' + fieldName + '￮' + token + '￮￮',
+    value: [[item[1].toFixed(16), doc.id]]
+  })
+}
+
+// remove fields from document that fail these conditions
+var removeInvalidFields = function (doc, indexerOptions) {
   for (var fieldKey in doc) {
     if (Array.isArray(doc[fieldKey])) continue
     else if (doc[fieldKey] === null) {
       delete doc[fieldKey]
-      log.info(doc.id + ': ' + fieldKey + ' field is null, SKIPPING')
-      // only index fields that are strings or numbers
+      indexerOptions.log.info(doc.id + ': ' + fieldKey + ' field is null, SKIPPING')
+    // only index fields that are strings or numbers
     } else if (!(_isString(doc[fieldKey]) || _isNumber(doc[fieldKey]))) {
       delete doc[fieldKey]
-      log.info(doc.id + ': ' + fieldKey +
-               ' field not string or array, SKIPPING')
+      indexerOptions.log.info(doc.id + ': ' + fieldKey +
+        ' field not string or array, SKIPPING')
     }
   }
   return doc
 }
 
-
-var getOptions = function(givenOptions, callbacky) {
+// munge passed options into defaults options and return
+var getOptions = function (givenOptions, callbacky) {
   givenOptions = givenOptions || {}
   async.parallel([
-    function(callback) {
+    function (callback) {
       var defaultOps = {}
       defaultOps.deletable = true
       defaultOps.fieldedSearch = true
@@ -347,19 +338,18 @@ var getOptions = function(givenOptions, callbacky) {
       })
       callback(null, defaultOps)
     },
-    function(callback){
+    function (callback) {
       if (!givenOptions.indexes) {
         levelup(givenOptions.indexPath || 'si', {
           valueEncoding: 'json'
-        }, function(err, db) {
-          callback(null, db)          
+        }, function (err, db) {
+          callback(err, db)
         })
-      }
-      else {
+      } else {
         callback(null, null)
       }
     }
-  ], function(err, results){
+  ], function (err, results) {
     var options = _defaults(givenOptions, results[0])
     if (results[1] != null) {
       options.indexes = results[1]
@@ -368,6 +358,7 @@ var getOptions = function(givenOptions, callbacky) {
   })
 }
 
+// munge passed batch options into defaults and return
 var processBatchOptions = function (siOptions, batchOptions) {
   var defaultFieldOptions = {
     filter: false,

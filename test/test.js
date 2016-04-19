@@ -23,9 +23,12 @@ test('set seperator at field level', function (t) {
   }, function (err, indexer) {
     t.error(err)
     indexer.add(batch, {
-      fieldOptions: [{
-        fieldName: 'body',
-        separator: 'x'}]
+      fieldOptions: [
+        {
+          fieldName: 'body',
+          separator: 'x'
+        }
+      ]
     }, function (err) {
       t.error(err)
       sis(indexer.options, function (err, searcher) {
@@ -83,38 +86,38 @@ test('simple indexing test', function (t) {
   })
 })
 
-// test('concurrancy test', function (t) {
-//   var startTime = Date.now()
-//   t.plan(19)
-//   sia({indexPath: 'test/sandbox/concurrentIndexing'}, function (err, indexer) {
-//     t.error(err)
-//     sis(indexer.options, function (err, searcher) {
-//       t.error(err)
-//       var batchData = da(require('../node_modules/reuters-21578-json/data/full/reuters-000.json'), 10)
-//       t.equal(batchData.length, 10)
-//       async.each(batchData, function (batch, callback) {
-//         console.log('task submitted')
-//         indexer.add(batch, {}, function (err) {
-//           if (!err) t.pass('no errorness')
-//           callback()
-//         })
-//       }, function (err) {
-//         t.error(err)
-//         var q = {}
-//         q.query = {'*': ['usa']} // TODO: add error message if this is
-//         //      not an array
-//         searcher.search(q, function (err, searchResults) {
-//           if (!err) t.pass('no errorness')
-//           t.deepLooseEqual(_.map(searchResults.hits, 'id').slice(0, 10), resultForStarUSA)
-//         })
-//         indexer.options.indexes.get('LAST-UPDATE-TIMESTAMP', function (err, val) {
-//           t.error(err)
-//           t.ok((val - startTime) > 0,
-//             'lastUpdateTimestamp seems reasonable (' + (val - startTime) + ')')
-//           t.ok((val - startTime) < 60000,
-//             'lastUpdateTimestamp seems reasonable (' + (val - startTime) + ')')
-//         })
-//       })
-//     })
-//   })
-// })
+test('concurrancy test', function (t) {
+  var startTime = Date.now()
+  t.plan(19)
+  sia({indexPath: 'test/sandbox/concurrentIndexing'}, function (err, indexer) {
+    t.error(err)
+    sis(indexer.options, function (err, searcher) {
+      t.error(err)
+      var batchData = da(require('../node_modules/reuters-21578-json/data/full/reuters-000.json'), 10)
+      t.equal(batchData.length, 10)
+      async.each(batchData, function (batch, callback) {
+        console.log('task submitted')
+        indexer.add(batch, {}, function (err) {
+          if (!err) t.pass('no errorness')
+          callback()
+        })
+      }, function (err) {
+        t.error(err)
+        var q = {}
+        q.query = {'*': ['usa']} // TODO: add error message if this is
+        //      not an array
+        searcher.search(q, function (err, searchResults) {
+          if (!err) t.pass('no errorness')
+          t.deepLooseEqual(_.map(searchResults.hits, 'id').slice(0, 10), resultForStarUSA)
+        })
+        indexer.options.indexes.get('LAST-UPDATE-TIMESTAMP', function (err, val) {
+          t.error(err)
+          t.ok((val - startTime) > 0,
+            'lastUpdateTimestamp seems reasonable (' + (val - startTime) + ')')
+          t.ok((val - startTime) < 60000,
+            'lastUpdateTimestamp seems reasonable (' + (val - startTime) + ')')
+        })
+      })
+    })
+  })
+})
