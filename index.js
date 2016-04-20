@@ -130,13 +130,13 @@ var addBatch = function (batch, batchOptions, indexerOptions, callbackster) {
       prev.push(item)
     } else if (item.key.substring(0, 8) === 'DOCUMENT') {
       prev.push(item)
-    } else if (item.key.substring(0, 2) === 'RI') {
+    } else if (item.key.substring(0, 2) === 'TF') {
       if (item.key === _last(prev).key) {
         _last(prev).value.push(item.value[0])
       } else {
         prev.push(item)
       }
-    } else if (item.key.substring(0, 2) === 'TF') {
+    } else if (item.key.substring(0, 2) === 'DF') {
       if (item.key === _last(prev).key) {
         _last(prev).value = _last(prev).value.concat(item.value)
       } else {
@@ -151,12 +151,12 @@ var addBatch = function (batch, batchOptions, indexerOptions, callbackster) {
     function (item, callback) {
       indexerOptions.indexes.get(item.key, function (err, val) {
         if (err) indexerOptions.log.info(err)
-        if (item.key.substring(0, 2) === 'TF') {
+        if (item.key.substring(0, 2) === 'DF') {
           if (val) {
             item.value = item.value.concat(val)
           }
           item.value = item.value.sort()
-        } else if (item.key.substring(0, 2) === 'RI') {
+        } else if (item.key.substring(0, 2) === 'TF') {
           if (val) {
             item.value = item.value.concat(val)
           }
@@ -277,12 +277,12 @@ var getKeys = function (batchOptions,
       if ((filterKey !== 'undefined') && (filterKey !== undefined)) {
         docIndexEntries.push({
           type: 'put',
-          key: 'TF￮' + fieldName + '￮' + token + '￮' + filter + '￮' + filterKey,
+          key: 'DF￮' + fieldName + '￮' + token + '￮' + filter + '￮' + filterKey,
           value: [doc.id]
         })
         docIndexEntries.push({
           type: 'put',
-          key: 'RI￮' + fieldName + '￮' + token + '￮' + filter + '￮' + filterKey,
+          key: 'TF￮' + fieldName + '￮' + token + '￮' + filter + '￮' + filterKey,
           value: [[item[1].toFixed(16), doc.id]]
         })
       }
@@ -290,12 +290,12 @@ var getKeys = function (batchOptions,
   })
   docIndexEntries.push({
     type: 'put',
-    key: 'TF￮' + fieldName + '￮' + token + '￮￮',
+    key: 'DF￮' + fieldName + '￮' + token + '￮￮',
     value: [doc.id]
   })
   docIndexEntries.push({
     type: 'put',
-    key: 'RI￮' + fieldName + '￮' + token + '￮￮',
+    key: 'TF￮' + fieldName + '￮' + token + '￮￮',
     value: [[item[1].toFixed(16), doc.id]]
   })
 }
