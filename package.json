@@ -1,6 +1,6 @@
 {
   "name": "search-index-adder",
-  "version": "0.0.18",
+  "version": "0.0.19",
   "description": "The indexing module for search-index",
   "main": "index.js",
   "scripts": {
@@ -42,7 +42,7 @@
     "lodash.reduce": "^4.3.0",
     "lodash.sortby": "^4.3.0",
     "object-hash": "^1.1.0",
-    "search-index-deleter": "0.0.6",
+    "search-index-deleter": "0.0.7",
     "term-frequency": "0.0.6",
     "term-vector": "0.0.18"
   },
