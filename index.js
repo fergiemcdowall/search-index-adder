@@ -16,9 +16,14 @@ const async = require('async')
 const bunyan = require('bunyan')
 const hash = require('object-hash')
 const levelup = require('levelup')
+// const sep = '￮'
+const sep = '￮'
+const wildChar = '*'
+
 const sid = require('search-index-deleter')
 const tf = require('term-frequency')
 const tv = require('term-vector')
+
 
 module.exports = function (givenOptions, callback) {
   var Indexer = {}
@@ -57,11 +62,16 @@ module.exports = function (givenOptions, callback) {
       // before adding new docs, deleter checks the index to see if
       // documents with the same id exists and then deletes them
       Indexer.deleter.deleteBatch(_map(batch.data, 'id'), function (err) {
-        if (err) Indexer.options.log.info(err)
-        // docs are now deleted if they existed, new docs can be added
-        addBatch(batch.data, batch.options, Indexer.options, function (err) {
+        // this needs to be changed to get 'deletable' to work properly
+        if (err) {
+          Indexer.options.log.info(err)
           return callback(err)
-        })
+        } else {
+          // docs are now deleted if they existed, new docs can be added
+          addBatch(batch.data, batch.options, Indexer.options, function (err) {
+            return callback(err)
+          })
+        }
       })
     }, 1)
 
@@ -109,7 +119,9 @@ var addBatchToIndex = function (q, batch, batchOptions, indexerOptions, callback
 // Add this batch to the index respecting batch options and indexing
 // options
 var addBatch = function (batch, batchOptions, indexerOptions, callbackster) {
-  var dbInstructions = []
+  var dbInstructions = []  
+  var docsIndexed = 0
+
   batch.forEach(function (doc) {
     // get database instructions for every doc. Instructions are keys
     // that must be added for every doc
@@ -144,7 +156,7 @@ var addBatch = function (batch, batchOptions, indexerOptions, callbackster) {
       }
     }
     return prev
-  }, [])
+  }, [{key: '#', value: '#', type: '#'}])
 
   async.eachSeries(
     dbInstructions,
@@ -169,7 +181,6 @@ var addBatch = function (batch, batchOptions, indexerOptions, callbackster) {
             return 0
           })
         } else if (item.key === 'DOCUMENT-COUNT') {
-          // console.log(val)
           if (val) {
             item.value = +val + +(item.value)
           }
@@ -204,7 +215,7 @@ var getIndexEntries = function (doc, batchOptions, indexerOptions) {
   indexerOptions.log.info('indexing ' + doc.id)
   docIndexEntries.push({
     type: 'put',
-    key: 'DOCUMENT￮' + doc.id + '￮',
+    key: 'DOCUMENT' + sep + doc.id + sep,
     value: _pick(doc, batchOptions.fieldsToStore)
   })
   var freqsForComposite = [] // put document frequencies in here
@@ -227,7 +238,7 @@ var getIndexEntries = function (doc, batchOptions, indexerOptions) {
       scheme: 'doubleLogNormalization0.5',
       weight: fieldOptions.weight
     })
-    freq.push([ [ '*' ], 0 ]) // can do wildcard searh on this field
+    freq.push([ [ wildChar ], 0 ]) // can do wildcard searh on this field
     if (fieldOptions.searchable) {
       freqsForComposite.push(freq)
     }
@@ -235,6 +246,7 @@ var getIndexEntries = function (doc, batchOptions, indexerOptions) {
       freq.forEach(function (item) {
         var token = item[0].join(indexerOptions.nGramSeparator)
         getKeys(batchOptions, docIndexEntries, doc, token, item, fieldName)
+        return
       })
     }
   })
@@ -251,14 +263,18 @@ var getIndexEntries = function (doc, batchOptions, indexerOptions) {
   }, [])
   freqsForComposite = _forEach(freqsForComposite, function (item) {
     var token = item[0].join(indexerOptions.nGramSeparator)
-    getKeys(batchOptions, docIndexEntries, doc, token, item, '*')
+    getKeys(batchOptions, docIndexEntries, doc, token, item, wildChar)
+    return
   })
 
-  docIndexEntries.push({
-    type: 'put',
-    key: 'DELETE-DOCUMENT￮' + doc.id,
-    value: _map(docIndexEntries, 'key')
-  })
+  if (indexerOptions.deletable) {
+    docIndexEntries.push({
+      type: 'put',
+      key: 'DELETE-DOCUMENT' + sep + doc.id,
+      value: _map(docIndexEntries, 'key')
+    })
+  }
+
   return docIndexEntries
 }
 
@@ -277,25 +293,27 @@ var getKeys = function (batchOptions,
       if ((filterKey !== 'undefined') && (filterKey !== undefined)) {
         docIndexEntries.push({
           type: 'put',
-          key: 'DF￮' + fieldName + '￮' + token + '￮' + filter + '￮' + filterKey,
+          key: 'DF' + sep + fieldName + sep + token + sep + filter + sep + filterKey,
           value: [doc.id]
         })
         docIndexEntries.push({
           type: 'put',
-          key: 'TF￮' + fieldName + '￮' + token + '￮' + filter + '￮' + filterKey,
+          key: 'TF' + sep + fieldName + sep + token + sep + filter + sep + filterKey,
           value: [[item[1].toFixed(16), doc.id]]
         })
       }
+      return
     })
+    return
   })
   docIndexEntries.push({
     type: 'put',
-    key: 'DF￮' + fieldName + '￮' + token + '￮￮',
+    key: 'DF' + sep + fieldName + sep + token + sep + sep,
     value: [doc.id]
   })
   docIndexEntries.push({
     type: 'put',
-    key: 'TF￮' + fieldName + '￮' + token + '￮￮',
+    key: 'TF' + sep + fieldName + sep + token + sep + sep,
     value: [[item[1].toFixed(16), doc.id]]
   })
 }
@@ -375,8 +393,8 @@ var processBatchOptions = function (siOptions, batchOptions) {
   }
   batchOptions = _defaults(batchOptions || {}, defaultBatchOptions)
   batchOptions.filters = _map(_filter(batchOptions.fieldOptions, 'filter'), 'fieldName')
-  if (_find(batchOptions.fieldOptions, ['fieldName', '*']) === -1) {
-    batchOptions.fieldOptions.push(defaultFieldOptions('*'))
+  if (_find(batchOptions.fieldOptions, ['fieldName', wildChar]) === -1) {
+    batchOptions.fieldOptions.push(defaultFieldOptions(wildChar))
   }
   return batchOptions
 }
