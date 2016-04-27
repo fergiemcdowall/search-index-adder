@@ -1,7 +1,6 @@
 // provokes an "out of memory" error when run with
 // node --max_old_space_size=200
 
-var fs = require('fs')
 var indexPath = 'test/sandbox/stressTest'
 
 require('search-index')({indexPath: indexPath}, function (err, si) {

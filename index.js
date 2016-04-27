@@ -9,7 +9,6 @@ const _isPlainObject = require('lodash.isplainobject')
 const _isString = require('lodash.isstring')
 const _last = require('lodash.last')
 const _map = require('lodash.map')
-const _pick = require('lodash.pick')
 const _reduce = require('lodash.reduce')
 const _sortBy = require('lodash.sortby')
 const async = require('async')
@@ -23,7 +22,6 @@ const wildChar = '*'
 const sid = require('search-index-deleter')
 const tf = require('term-frequency')
 const tv = require('term-vector')
-
 
 module.exports = function (givenOptions, callback) {
   var Indexer = {}
@@ -119,8 +117,7 @@ var addBatchToIndex = function (q, batch, batchOptions, indexerOptions, callback
 // Add this batch to the index respecting batch options and indexing
 // options
 var addBatch = function (batch, batchOptions, indexerOptions, callbackster) {
-  var dbInstructions = []  
-  var docsIndexed = 0
+  var dbInstructions = []
 
   batch.forEach(function (doc) {
     // get database instructions for every doc. Instructions are keys
@@ -205,28 +202,24 @@ var addBatch = function (batch, batchOptions, indexerOptions, callbackster) {
 // get all index keys that this document will be added to
 var getIndexEntries = function (doc, batchOptions, indexerOptions) {
   var docIndexEntries = []
-  // if (!_isPlainObject(doc)) {
-  //   return callback(new Error('Malformed document'), {})
-  // }
   doc = removeInvalidFields(doc, indexerOptions)
-  if (batchOptions.fieldsToStore === 'all') {
-    batchOptions.fieldsToStore = Object.keys(doc)
-  }
   indexerOptions.log.info('indexing ' + doc.id)
-  docIndexEntries.push({
-    type: 'put',
-    key: 'DOCUMENT' + sep + doc.id + sep,
-    value: _pick(doc, batchOptions.fieldsToStore)
-  })
+  var docToStore = {}
   var freqsForComposite = [] // put document frequencies in here
   _forEach(doc, function (field, fieldName) {
     var fieldOptions = _defaults(_find(batchOptions.fieldOptions, ['fieldName', fieldName]) || {}, batchOptions.defaultFieldOptions)
+
+    // console.log(fieldName)
+    // console.log(fieldOptions.store)
+
     if (fieldName === 'id') {
       fieldOptions.stopwords = '' // because you cant run stopwords on id field
     } else {
       fieldOptions.stopwords = batchOptions.stopwords
     }
     if (Array.isArray(field)) field = field.join(' ') // make filter fields searchable
+
+    if (fieldOptions.store) docToStore[fieldName] = field
 
     var vecOps = {
       separator: fieldOptions.separator || batchOptions.separator,
@@ -250,6 +243,13 @@ var getIndexEntries = function (doc, batchOptions, indexerOptions) {
       })
     }
   })
+
+  docIndexEntries.push({
+    type: 'put',
+    key: 'DOCUMENT' + sep + doc.id + sep,
+    value: docToStore
+  })
+
   freqsForComposite = _flatten(freqsForComposite).sort()
   freqsForComposite = _reduce(freqsForComposite, function (prev, item) {
     if (!prev[0]) {
@@ -343,7 +343,7 @@ var getOptions = function (givenOptions, callbacky) {
       var defaultOps = {}
       defaultOps.deletable = true
       defaultOps.fieldedSearch = true
-      defaultOps.fieldsToStore = 'all'
+      defaultOps.store = true
       defaultOps.indexPath = 'si'
       defaultOps.logLevel = 'error'
       defaultOps.nGramLength = 1
@@ -383,12 +383,12 @@ var processBatchOptions = function (siOptions, batchOptions) {
     nGramLength: siOptions.nGramLength,
     searchable: true,
     weight: 0,
+    store: siOptions.store,
     fieldedSearch: siOptions.fieldedSearch
   }
   var defaultBatchOptions = {
     batchName: 'Batch at ' + new Date().toISOString(),
     fieldOptions: siOptions.fieldOptions || defaultFieldOptions,
-    fieldsToStore: siOptions.fieldsToStore,
     defaultFieldOptions: defaultFieldOptions
   }
   batchOptions = _defaults(batchOptions || {}, defaultBatchOptions)

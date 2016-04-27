@@ -62,11 +62,11 @@ test('simple indexing test - debugging 510', function (t) {
         }
         searcher.search(q, function (err, searchResults) {
           t.error(err)
-           t.equal(searchResults.hits[0].tfidf[0][0][0], 'usa')
-           t.equal(searchResults.hits[0].tfidf[0][0][1], '*')
-           t.equal(searchResults.hits[0].tfidf[0][0][2], 0.545144315135374)
-           t.equal(searchResults.hits[0].tfidf[0][0][3], 1.8109302162163288)
-           t.equal(searchResults.hits[0].tfidf[0][0][4], 0.3010299956639812)
+          t.equal(searchResults.hits[0].tfidf[0][0][0], 'usa')
+          t.equal(searchResults.hits[0].tfidf[0][0][1], '*')
+          t.equal(searchResults.hits[0].tfidf[0][0][2], 0.545144315135374)
+          t.equal(searchResults.hits[0].tfidf[0][0][3], 1.8109302162163288)
+          t.equal(searchResults.hits[0].tfidf[0][0][4], 0.3010299956639812)
         })
       })
     })
