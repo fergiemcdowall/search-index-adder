@@ -217,9 +217,12 @@ var getIndexEntries = function (doc, batchOptions, indexerOptions) {
     } else {
       fieldOptions.stopwords = batchOptions.stopwords
     }
+
+    // store the field BEFORE mutating.
+    if (fieldOptions.store) docToStore[fieldName] = field
+
     if (Array.isArray(field)) field = field.join(' ') // make filter fields searchable
 
-    if (fieldOptions.store) docToStore[fieldName] = field
 
     var vecOps = {
       separator: fieldOptions.separator || batchOptions.separator,
