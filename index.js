@@ -192,7 +192,7 @@ var addBatch = function (batch, batchOptions, indexerOptions, callbackster) {
         if (err) {
           indexerOptions.log.info('Ooops!', err)
         } else {
-          indexerOptions.log.info('BATCH INDEXED')
+          indexerOptions.log.info('BATCH ADDED')
         }
         return callbackster(null)
       })
@@ -203,7 +203,7 @@ var addBatch = function (batch, batchOptions, indexerOptions, callbackster) {
 var getIndexEntries = function (doc, batchOptions, indexerOptions) {
   var docIndexEntries = []
   doc = removeInvalidFields(doc, indexerOptions)
-  indexerOptions.log.info('indexing ' + doc.id)
+  indexerOptions.log.info({docid: doc.id}, 'ADD')
   var docToStore = {}
   var freqsForComposite = [] // put document frequencies in here
   _forEach(doc, function (field, fieldName) {
