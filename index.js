@@ -62,7 +62,7 @@ module.exports = function (givenOptions, callback) {
       Indexer.deleter.deleteBatch(_map(batch.data, 'id'), function (err) {
         // this needs to be changed to get 'deletable' to work properly
         if (err) {
-          Indexer.options.log.info(err)
+          Indexer.options.log.debug(err)
           return callback(err)
         } else {
           // docs are now deleted if they existed, new docs can be added
@@ -77,10 +77,10 @@ module.exports = function (givenOptions, callback) {
     Indexer.close = function (callback) {
       Indexer.options.indexes.close(function (err) {
         while (!Indexer.options.indexes.isClosed()) {
-          Indexer.options.log.info('closing...')
+          Indexer.options.log.debug('closing...')
         }
         if (Indexer.options.indexes.isClosed()) {
-          Indexer.options.log.info('closed...')
+          Indexer.options.log.debug('closed...')
           callback(err)
         }
       })
@@ -159,7 +159,7 @@ var addBatch = function (batch, batchOptions, indexerOptions, callbackster) {
     dbInstructions,
     function (item, callback) {
       indexerOptions.indexes.get(item.key, function (err, val) {
-        if (err) indexerOptions.log.info(err)
+        if (err) indexerOptions.log.debug(err)
         if (item.key.substring(0, 2) === 'DF') {
           if (val) {
             item.value = item.value.concat(val)
@@ -186,13 +186,13 @@ var addBatch = function (batch, batchOptions, indexerOptions, callbackster) {
       })
     },
     function (err) {
-      if (err) indexerOptions.log.info(err)
+      if (err) indexerOptions.log.debug(err)
       dbInstructions.push({key: 'LAST-UPDATE-TIMESTAMP', value: Date.now()})
       indexerOptions.indexes.batch(dbInstructions, function (err) {
         if (err) {
           indexerOptions.log.info('Ooops!', err)
         } else {
-          indexerOptions.log.info('batch indexed!')
+          indexerOptions.log.info('BATCH INDEXED')
         }
         return callbackster(null)
       })
@@ -324,11 +324,11 @@ var removeInvalidFields = function (doc, indexerOptions) {
     if (Array.isArray(doc[fieldKey])) continue
     else if (doc[fieldKey] === null) {
       delete doc[fieldKey]
-      indexerOptions.log.info(doc.id + ': ' + fieldKey + ' field is null, SKIPPING')
+      indexerOptions.log.debug(doc.id + ': ' + fieldKey + ' field is null, SKIPPING')
     // only index fields that are strings or numbers
     } else if (!(_isString(doc[fieldKey]) || _isNumber(doc[fieldKey]))) {
       delete doc[fieldKey]
-      indexerOptions.log.info(doc.id + ': ' + fieldKey +
+      indexerOptions.log.debug(doc.id + ': ' + fieldKey +
         ' field not string or array, SKIPPING')
     }
   }
@@ -349,7 +349,7 @@ var getOptions = function (givenOptions, callbacky) {
       defaultOps.nGramLength = 1
       defaultOps.nGramSeparator = ' '
       defaultOps.separator = /[\|' \.,\-|(\n)]+/
-      defaultOps.stopwords = tv.getStopwords('en').sort()
+      defaultOps.stopwords = tv.getStopwords('en').sort() 
       defaultOps.log = bunyan.createLogger({
         name: 'search-index',
         level: givenOptions.logLevel || defaultOps.logLevel
