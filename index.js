@@ -202,7 +202,6 @@ var addBatch = function (batch, batchOptions, indexerOptions, callbackster) {
 // get all index keys that this document will be added to
 var getIndexEntries = function (doc, batchOptions, indexerOptions) {
   var docIndexEntries = []
-  doc = removeInvalidFields(doc, indexerOptions)
   indexerOptions.log.info({docid: doc.id}, 'ADD')
   var docToStore = {}
   var freqsForComposite = [] // put document frequencies in here
@@ -221,8 +220,21 @@ var getIndexEntries = function (doc, batchOptions, indexerOptions) {
     // store the field BEFORE mutating.
     if (fieldOptions.store) docToStore[fieldName] = field
 
-    if (Array.isArray(field)) field = field.join(' ') // make filter fields searchable
-
+    // filter out invalid values from being indexes
+    if (Array.isArray(field)) {
+      // make filter fields searchable
+      field = field.join(' ')
+    } else if (field === null) {
+      // skip null values
+      delete doc[fieldName]
+      indexerOptions.log.debug(doc.id + ': ' + fieldName + ' field is null, SKIPPING')
+      // only index fields that are strings or numbers
+    } else if (!(_isString(field) || _isNumber(field))) {
+      // don't index unsearchable types
+      delete doc[fieldName]
+      indexerOptions.log.debug(doc.id + ': ' + fieldName +
+        ' field not string or array, SKIPPING')
+    }
 
     var vecOps = {
       separator: fieldOptions.separator || batchOptions.separator,
@@ -321,23 +333,6 @@ var getKeys = function (batchOptions,
   })
 }
 
-// remove fields from document that fail these conditions
-var removeInvalidFields = function (doc, indexerOptions) {
-  for (var fieldKey in doc) {
-    if (Array.isArray(doc[fieldKey])) continue
-    else if (doc[fieldKey] === null) {
-      delete doc[fieldKey]
-      indexerOptions.log.debug(doc.id + ': ' + fieldKey + ' field is null, SKIPPING')
-    // only index fields that are strings or numbers
-    } else if (!(_isString(doc[fieldKey]) || _isNumber(doc[fieldKey]))) {
-      delete doc[fieldKey]
-      indexerOptions.log.debug(doc.id + ': ' + fieldKey +
-        ' field not string or array, SKIPPING')
-    }
-  }
-  return doc
-}
-
 // munge passed options into defaults options and return
 var getOptions = function (givenOptions, callbacky) {
   givenOptions = givenOptions || {}
@@ -352,7 +347,7 @@ var getOptions = function (givenOptions, callbacky) {
       defaultOps.nGramLength = 1
       defaultOps.nGramSeparator = ' '
       defaultOps.separator = /[\|' \.,\-|(\n)]+/
-      defaultOps.stopwords = tv.getStopwords('en').sort() 
+      defaultOps.stopwords = tv.getStopwords('en').sort()
       defaultOps.log = bunyan.createLogger({
         name: 'search-index',
         level: givenOptions.logLevel || defaultOps.logLevel
