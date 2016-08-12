@@ -16,7 +16,10 @@ const bunyan = require('bunyan')
 const hash = require('object-hash')
 const levelup = require('levelup')
 // const sep = '￮'
+const Readable = require('stream').Readable
 const sep = '￮'
+const Transform = require('stream').Transform
+const util = require('util')
 const wildChar = '*'
 
 const sid = require('search-index-deleter')
@@ -99,10 +102,44 @@ module.exports = function (givenOptions, callback) {
         callback)
     }
 
+    Indexer.createWriteStream = function (batchOptions) {
+      batchOptions = _defaults(batchOptions || {}, {batchSize: 1000})
+      function IndexBatch (batchOptions) {
+        this.batchSize = batchOptions.batchSize
+        this.currentBatch = []
+        Transform.call(this, { objectMode: true })
+      }
+      util.inherits(IndexBatch, Transform)
+      IndexBatch.prototype._transform = function (data, encoding, end) {
+        this.currentBatch.push(data)
+        this.push('doc ' + data.id + ' added')
+        var that = this
+        if (this.currentBatch.length % this.batchSize == 0) {
+          Indexer.add(this.currentBatch, {}, function(err) {
+            // TODO: some nice error handling if things go wrong
+            that.currentBatch = [] // reset batch
+            that.push('batch indexed')
+            end()
+          })
+        } else {
+          end()
+        }
+      }
+      IndexBatch.prototype._flush = function (end) {
+        var that = this
+        Indexer.add(this.currentBatch, {}, function(err) {
+          that.push('remaining docs indexed')
+          end()
+        })
+      }
+      return new IndexBatch(batchOptions)
+    }
+
     //  return Indexer
     return callback(null, Indexer)
   })
 }
+
 
 // Take a batch (array of documents to be indexed) and add it to the
 // indexing queue. Batch options and indexing options are honoured

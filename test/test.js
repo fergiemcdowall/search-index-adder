@@ -134,26 +134,26 @@ test('concurrancy test', function (t) {
 })
 
 test('preserve array fields in stored document', function (t) {
-    t.plan(6)
-    sia({indexPath: 'test/sandbox/preserveArrayFields'}, function (err, indexer) {
-        t.error(err)
-        sis(indexer.options, function (err, searcher) {
-            t.error(err)
-            indexer.add([{'id': '1', 'anArray': ['one', 'two', 'three']}], function (err) {
-                var q = {};
-                if (!err) t.pass('no errors')
+  t.plan(6)
+  sia({indexPath: 'test/sandbox/preserveArrayFields'}, function (err, indexer) {
+    t.error(err)
+    sis(indexer.options, function (err, searcher) {
+      t.error(err)
+      indexer.add([{'id': '1', 'anArray': ['one', 'two', 'three']}], function (err) {
+        var q = {};
+        if (!err) t.pass('no errors')
 
-                q.query = {
-                    AND: {'*': ['one']}
-                }
+        q.query = {
+          AND: {'*': ['one']}
+        }
 
-                searcher.search(q, function (err, searchResults) {
-                    if (!err) t.pass('no errors')
+        searcher.search(q, function (err, searchResults) {
+          if (!err) t.pass('no errors')
 
-                    t.equal(searchResults.hits.length, 1)
-                    t.deepEqual(searchResults.hits[0].document, {'id': '1', 'anArray': ['one', 'two', 'three']})
-                })
-            })
+          t.equal(searchResults.hits.length, 1)
+          t.deepEqual(searchResults.hits[0].document, {'id': '1', 'anArray': ['one', 'two', 'three']})
         })
+      })
     })
+  })
 })
