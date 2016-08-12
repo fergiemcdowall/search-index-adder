@@ -50,7 +50,7 @@
     "distribute-array": "0.0.3",
     "level-out": "0.0.6",
     "lodash": "^4.11.2",
-    "reuters-21578-json": "0.0.7",
+    "reuters-21578-json": "0.0.8",
     "search-index": "^0.8.6",
     "search-index-searcher": "0.0.19",
     "standard": "^6.0.8",
