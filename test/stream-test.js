@@ -3,7 +3,7 @@ var fs = require('fs')
 var sia = require('../')
 var SearchIndex = require('search-index')
 var test = require('tape')
-var JSONstream = require('JSONstream')
+var JSONStream = require('JSONStream')
 var indexer
 
 
@@ -19,7 +19,7 @@ test('init indexer', function (t) {
 
 
 test('test stream file', function (t) {
-  t.plan (10)
+  t.plan (11)
   const filePath = '../reuters-21578-json/data/fullFileStream/justTen.str'
   require('readline').createInterface({
     input: fs.createReadStream(filePath)
@@ -34,13 +34,13 @@ test('test stream file', function (t) {
 
 
 test('stream file to search-index', { timeout: 6000000 }, function (t) {
-  t.plan (1)
+  t.plan (12)
   const filePath = '../reuters-21578-json/data/fullFileStream/justTen.str'
     fs.createReadStream(filePath)
-    .pipe(JSONstream.parse())
+    .pipe(JSONStream.parse())
     .pipe(indexer.createWriteStream())
     .on('data', function(data) {
-      console.log(data)
+      t.ok(true)
     }).on('end', function() {
       console.log('test completed')
       t.ok(true)

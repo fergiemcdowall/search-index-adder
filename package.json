@@ -1,10 +1,10 @@
 {
   "name": "search-index-adder",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "The indexing module for search-index",
   "main": "index.js",
   "scripts": {
-    "test": "rm -rf test/sandbox && mkdir test/sandbox && tape test/stream-test.js && tape test/test.js",
+    "test": "rm -rf test/sandbox && mkdir test/sandbox && tape test/stream-test.js test/test.js",
     "stress-test": "rm -rf test/sandbox && mkdir test/sandbox && node --max_old_space_size=200 test/stress-test.js"
   },
   "repository": {
