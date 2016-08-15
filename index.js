@@ -319,6 +319,12 @@ var getIndexEntries = function (doc, batchOptions, indexerOptions) {
     return
   })
 
+  docIndexEntries.push({
+    type: 'put',
+    key: 'DOCUMENT-VECTOR' + sep + doc.id + sep,
+    value: freqsForComposite
+  })
+
   if (indexerOptions.deletable) {
     docIndexEntries.push({
       type: 'put',
