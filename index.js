@@ -292,6 +292,11 @@ var getIndexEntries = function (doc, batchOptions, indexerOptions) {
         var token = item[0].join(indexerOptions.nGramSeparator)
         getKeys(batchOptions, docIndexEntries, doc, token, item, fieldName)
         return
+      })      
+      docIndexEntries.push({
+        type: 'put',
+        key: 'DOCUMENT-VECTOR' + sep + doc.id + sep + fieldName + sep,
+        value: freq
       })
     }
   })
@@ -321,7 +326,7 @@ var getIndexEntries = function (doc, batchOptions, indexerOptions) {
 
   docIndexEntries.push({
     type: 'put',
-    key: 'DOCUMENT-VECTOR' + sep + doc.id + sep,
+    key: 'DOCUMENT-VECTOR' + sep + doc.id + sep + '*' + sep,
     value: freqsForComposite
   })
 
