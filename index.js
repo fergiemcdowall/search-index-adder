@@ -54,7 +54,7 @@ module.exports = function (givenOptions, callback) {
       batch.options = _defaults(batch.options, Indexer.options)
       // generate IDs if none are present and stringify numeric IDs
       var salt = 0
-      batch.data.map(function (doc) {
+      _map(batch.data,function (doc) {
         if (!doc.id) {
           doc.id = (++salt) + '-' + hash(doc)
         }
