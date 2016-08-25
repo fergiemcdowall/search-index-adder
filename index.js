@@ -1,16 +1,7 @@
 const IndexBatch = require('./lib/addUtils.js').IndexBatch
-const Readable = require('stream').Readable
-const Transform = require('stream').Transform
 const _defaults = require('lodash.defaults')
-const _isNumber = require('lodash.isnumber')
-const _isPlainObject = require('lodash.isplainobject')
-const _map = require('lodash.map')
 const addUtils = require('./lib/addUtils.js')
-const async = require('async')
 const deleter = require('./lib/deleter.js')
-const hash = require('object-hash')
-const levelup = require('levelup')
-const util = require('util')
 
 module.exports = function (givenOptions, callback) {
   addUtils.getOptions(givenOptions, function (err, options) {
@@ -20,7 +11,7 @@ module.exports = function (givenOptions, callback) {
 
     Indexer.deleteBatch = function (deleteBatch, APICallback) {
       deleter.tryDeleteBatch(options, deleteBatch, function (err) {
-        return APICallback(Indexer.err)
+        return APICallback(err)
       })
     }
 
@@ -61,8 +52,6 @@ module.exports = function (givenOptions, callback) {
     }
 
     //  return Indexer
-    return callback(null, Indexer, Indexer.q)
+    return callback(err, Indexer)
   })
 }
-
-

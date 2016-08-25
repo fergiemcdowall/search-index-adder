@@ -25,5 +25,5 @@ require('search-index')({indexPath: indexPath}, function (err, si) {
       })
     })
   })
-  // })
+// })
 })

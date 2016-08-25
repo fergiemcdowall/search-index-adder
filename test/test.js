@@ -140,7 +140,7 @@ test('preserve array fields in stored document', function (t) {
     sis(indexer.options, function (err, searcher) {
       t.error(err)
       indexer.add([{'id': '1', 'anArray': ['one', 'two', 'three']}], function (err) {
-        var q = {};
+        var q = {}
         if (!err) t.pass('no errors')
 
         q.query = {
