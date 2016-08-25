@@ -47,7 +47,8 @@ module.exports = function (givenOptions, callback) {
         callback = batchOptions
         batchOptions = undefined
       }
-      addUtils.addBatchToIndex(Indexer.q,
+      addUtils.addBatchToIndex(
+        Indexer.options.queue,
         batch,
         batchOptions,
         options,
