@@ -1,4 +1,6 @@
 const IndexBatch = require('./lib/addUtils.js').IndexBatch
+const DBWriteCleanStream = require('./lib/replicator.js').DBWriteCleanStream
+const DBWriteMergeStream = require('./lib/replicator.js').DBWriteMergeStream
 const _defaults = require('lodash.defaults')
 const addUtils = require('./lib/addUtils.js')
 const deleter = require('./lib/deleter.js')
@@ -19,6 +21,15 @@ module.exports = function (givenOptions, callback) {
       deleter.flush(options, function (err) {
         return APICallback(err)
       })
+    }
+
+    Indexer.dbWriteStream = function (streamOps) {
+      streamOps = _defaults(streamOps || {}, { merge: true })
+      if (streamOps.merge === true) {
+        return new DBWriteMergeStream(options)
+      } else {
+        return new DBWriteCleanStream(options)
+      }
     }
 
     Indexer.close = function (callback) {
