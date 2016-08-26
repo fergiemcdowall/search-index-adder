@@ -45,10 +45,11 @@ module.exports = function (givenOptions, callback) {
     }
 
     Indexer.add = function (batch, batchOptions, callback) {
-      if (arguments.length === 2 && (typeof arguments[1] === 'function')) {
-        callback = batchOptions
-        batchOptions = undefined
-      }
+      // // so you batchOptions is optional
+      // if (arguments.length === 2 && (typeof arguments[1] === 'function')) {
+      //   callback = batchOptions
+      //   batchOptions = undefined
+      // }
       addUtils.addBatchToIndex(
         Indexer.options.queue,
         batch,

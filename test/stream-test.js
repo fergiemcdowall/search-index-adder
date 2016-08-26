@@ -1,6 +1,6 @@
 var fs = require('fs')
 var sia = require('../')
-var SearchIndex = require('search-index')
+var SearchIndex = require('search-index-searcher')
 var test = require('tape')
 var JSONStream = require('JSONStream')
 var indexer
@@ -51,21 +51,18 @@ test('close search-index-adder', function (t) {
 })
 
 test('index should be searchable', function (t) {
-  t.plan(3)
+  t.plan(11)
+  var results = [ '9', '8', '7', '6', '5', '4', '3', '2', '10', '1' ]
   SearchIndex({
     indexPath: 'test/sandbox/streamTest'
   }, function (err, si) {
     t.error(err)
     si.search({
-      query: {
-        AND: [{'*': ['*']}]
-      }
-    }, function (err, results) {
-      t.error(err)
-      t.looseEqual(
-        results.hits.map(function (item) { return item.id }),
-        [ '9', '8', '7', '6', '5', '4', '3', '2', '10', '1' ]
-      )
+      query: [{
+        AND: {'*': ['*']}
+      }]
+    }).on('data', function (data) {
+      t.ok(JSON.parse(data).document.id === results.shift())
     })
   })
 })

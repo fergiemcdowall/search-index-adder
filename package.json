@@ -4,8 +4,8 @@
   "description": "The indexing module for search-index",
   "main": "index.js",
   "scripts": {
-    "test": "rm -rf test/sandbox && mkdir test/sandbox && tape test/stream-test.js test/test.js && standard",
-    "stress-test": "rm -rf test/sandbox && mkdir test/sandbox && node --max_old_space_size=200 test/stress-test.js"
+    "test": "rm -rf test/sandbox && mkdir test/sandbox && tape test/*.js && standard",
+    "stress-test": "rm -rf test/sandbox && mkdir test/sandbox && node --max_old_space_size=200 test/stresstest/stress-test.js"
   },
   "repository": {
     "type": "git",

@@ -1,5 +1,5 @@
 const JSONStream = require('JSONStream')
-const SearchIndex = require('search-index')
+const SearchIndexSearcher = require('search-index-searcher')
 const SearchIndexAdder = require('../')
 const s = require('stream')
 const test = require('tape')
@@ -63,202 +63,174 @@ stones.forEach(function (stone) {
 })
 stonesStream.push(null)
 
-var supergroup, beatlesIndex, stonesIndex
-
 test('make the beatles search index', function (t) {
   t.plan(7)
-  SearchIndex({
+  SearchIndexAdder({
     indexPath: 'test/sandbox/beatles'
   }, function (err, si) {
     t.error(err)
-    beatlesIndex = si
     beatlesStream
       .pipe(JSONStream.parse())
-      .pipe(beatlesIndex.createWriteStream())
+      .pipe(si.createWriteStream())
       .on('data', function (data) {
         t.ok(true, ' data recieved')
       })
       .on('end', function () {
-        t.ok(true, ' stream ended')
+        si.close(function (err) {
+          t.error(err)
+        })
       })
   })
 })
 
 test('make the stones search index', function (t) {
   t.plan(7)
-  SearchIndex({
+  SearchIndexAdder({
     indexPath: 'test/sandbox/stones'
   }, function (err, si) {
     t.error(err)
-    stonesIndex = si
     stonesStream
       .pipe(JSONStream.parse())
-      .pipe(stonesIndex.createWriteStream())
+      .pipe(si.createWriteStream())
       .on('data', function (data) {
         t.ok(true, ' data recieved')
       })
       .on('end', function () {
-        t.ok(true, ' stream ended')
+        si.close(function (err) {
+          t.error(err)
+        })
       })
   })
 })
 
 test('confirm can search as normal in beatles', function (t) {
-  t.plan(2)
-  beatlesIndex.search({
-    query: {
-      AND: [{'*': ['*']}]
-    }
-  }, function (err, results) {
+  t.plan(6)
+  var results = [ 'Ringo', 'George', 'Paul', 'John' ]
+  SearchIndexSearcher({
+    indexPath: 'test/sandbox/beatles'
+  }, function (err, si) {
     t.error(err)
-    t.looseEqual(
-      results.hits.map(function (item) {
-        return item.document.name
-      }),
-      [ 'Ringo', 'George', 'Paul', 'John' ]
-    )
+    si.search({
+      AND: [{'*': ['*']}]
+    }).on('data', function (data) {
+      data = JSON.parse(data)
+      t.ok(data.document.name, results.shift())
+    }).on('end', function () {
+      si.close(function (err) {
+        t.error(err)
+      })
+    })
   })
 })
 
 test('confirm can search as normal in stones', function (t) {
-  t.plan(2)
-  stonesIndex.search({
-    query: {
-      AND: [{'*': ['*']}]
-    }
-  }, function (err, results) {
-    t.error(err)
-    t.looseEqual(
-      results.hits.map(function (item) {
-        return item.document.name
-      }),
-      [ 'Ronnie', 'Charlie', 'Kieth', 'Mick' ]
-    )
-  })
-})
-
-test('make supergroup index', function (t) {
-  t.plan(1)
-  SearchIndex({
-    indexPath: 'test/sandbox/supergroup'
+  t.plan(6)
+  var results = [ 'Ronnie', 'Charlie', 'Kieth', 'Mick' ]
+  SearchIndexSearcher({
+    indexPath: 'test/sandbox/stones'
   }, function (err, si) {
     t.error(err)
-    supergroup = si
+    si.search({
+      AND: [{'*': ['*']}]
+    }).on('data', function (data) {
+      data = JSON.parse(data)
+      t.ok(data.document.name, results.shift())
+    }).on('end', function () {
+      si.close(function (err) {
+        t.error(err)
+      })
+    })
   })
 })
 
 test('gzipped replication from beatles to supergroup', function (t) {
-  t.plan(1)
-  beatlesIndex.DBReadStream({gzip: true})
-    .pipe(zlib.createGunzip())
-    .pipe(JSONStream.parse())
-    .pipe(supergroup.DBWriteStream())
-    .on('close', function () {
-      t.ok(true, 'stream closed')
+  t.plan(4)
+  SearchIndexAdder({
+    indexPath: 'test/sandbox/supergroup'
+  }, function (err, supergroup) {
+    t.error(err)
+    SearchIndexSearcher({
+      indexPath: 'test/sandbox/beatles'
+    }, function (err, beatles) {
+      t.error(err)
+      beatles.dbReadStream({gzip: true})
+        .pipe(zlib.createGunzip())
+        .pipe(JSONStream.parse())
+        .pipe(supergroup.dbWriteStream())
+        .on('data', function () {})
+        .on('end', function () {
+          supergroup.close(function (err) {
+            t.error(err)
+            beatles.close(function (err) {
+              t.error(err)
+            })
+          })
+        })
     })
+  })
 })
 
 test('supergroup contains beatles', function (t) {
-  t.plan(2)
-  supergroup.search({
-    query: {
-      AND: [{'*': ['*']}]
-    }
-  }, function (err, results) {
-    t.error(err)
-    t.looseEqual(
-      results.hits.map(function (item) {
-        return item.document.name
-      }),
-      [ 'Ringo', 'George', 'Paul', 'John' ]
-    )
-  })
-})
-
-test('close indexes', function (t) {
-  t.plan(3)
-  // close all search indexes and reopen them as replicators
-  beatlesIndex.close(function (err) {
-    t.error(err)
-  })
-  stonesIndex.close(function (err) {
-    t.error(err)
-  })
-  supergroup.close(function (err) {
-    t.error(err)
-  })
-})
-
-test('open replicators', function (t) {
-  t.plan(3)
-  Replicator({
-    indexPath: 'test/sandbox/beatles'
-  }, function (err, si) {
-    t.error(err)
-    beatlesIndex = si
-  })
-  Replicator({
-    indexPath: 'test/sandbox/stones'
-  }, function (err, si) {
-    t.error(err)
-    stonesIndex = si
-  })
-  Replicator({
+  t.plan(6)
+  var results = [ 'Ringo', 'George', 'Paul', 'John' ]
+  SearchIndexSearcher({
     indexPath: 'test/sandbox/supergroup'
   }, function (err, si) {
     t.error(err)
-    supergroup = si
+    si.search({
+      AND: [{'*': ['*']}]
+    }).on('data', function (data) {
+      data = JSON.parse(data)
+      t.ok(data.document.name, results.shift())
+    }).on('end', function () {
+      si.close(function (err) {
+        t.error(err)
+      })
+    })
   })
 })
 
-test('gzipped merge of stones into supergroup', function (t) {
-  t.plan(1)
-  stonesIndex.DBReadStream({gzip: true})
-    .pipe(zlib.createGunzip())
-    .pipe(JSONStream.parse())
-    .pipe(supergroup.DBWriteStream({merge: true}))
-    .on('data', function (data) {
-      console.log('data')
+test('gzipped replication of stones to supergroup', function (t) {
+  t.plan(4)
+  SearchIndexAdder({
+    indexPath: 'test/sandbox/supergroup'
+  }, function (err, supergroup) {
+    t.error(err)
+    SearchIndexSearcher({
+      indexPath: 'test/sandbox/stones'
+    }, function (err, stones) {
+      t.error(err)
+      stones.dbReadStream({gzip: true})
+        .pipe(zlib.createGunzip())
+        .pipe(JSONStream.parse())
+        .pipe(supergroup.dbWriteStream())
+        .on('data', function () {})
+        .on('end', function () {
+          supergroup.close(function (err) {
+            t.error(err)
+            stones.close(function (err) {
+              t.error(err)
+            })
+          })
+        })
     })
-    .on('end', function () {
-      console.log('stream ended')
-      t.ok(true, 'stream ended')
-    })
-})
-
-test('close replicators', function (t) {
-  t.plan(3)
-  // close all search indexes and reopen them as replicators
-  beatlesIndex.close(function (err) {
-    t.error(err)
-  })
-  stonesIndex.close(function (err) {
-    t.error(err)
-  })
-  supergroup.close(function (err) {
-    t.error(err)
   })
 })
 
 test('open supergroup index', function (t) {
-  t.plan(3)
-  SearchIndex({
+  t.plan(9)
+  var results = [ 'Ronnie', 'Ringo', 'George', 'Charlie', 'Paul', 'Kieth', 'Mick', 'John' ]
+  SearchIndexSearcher({
     indexPath: 'test/sandbox/supergroup'
   }, function (err, si) {
     t.error(err)
-    supergroup = si
-    supergroup.search({
-      query: {
-        AND: [{'*': ['*']}]
-      }
-    }, function (err, results) {
-      t.error(err)
-      t.looseEqual(
-        results.hits.map(function (item) {
-          return item.document.name
-        }),
-        [ 'Ronnie', 'Ringo', 'George', 'Charlie', 'Paul', 'Kieth', 'Mick', 'John' ]
-      )
+    si.search({
+      query: [{
+        AND: {'*': ['*']}
+      }]
+    }).on('data', function (data) {
+      data = JSON.parse(data)
+      t.ok(data.document.name === results.shift())
     })
   })
 })

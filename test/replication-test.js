@@ -134,14 +134,14 @@ test('gzipped replication from one index to another', function (t) {
     .pipe(replicatorTarget2.dbWriteStream())
     .on('data', function (data) {
       console.log('BOOOOOOOOOOM')
-      // data
+    // data
     })
     .on('error', function (err) {
       console.log(err)
     })
     .on('end', function () {
-      replicatorTarget2.close(function(err) {
-        t.ok(true, 'stream closed')
+      replicatorTarget2.close(function (err) {
+        t.error(err)
       })
     })
 })
@@ -153,7 +153,6 @@ test('initialise replication target2', function (t) {
     replicatorTarget2 = thisReplicator
   })
 })
-
 
 test('validate gzip replication', function (t) {
   t.plan(1)
@@ -174,8 +173,8 @@ test('confirm can search as normal in replicated index', function (t) {
     query: [{
       AND: {'*': ['*']}
     }]
-  }).on('data', function(data) {
+  }).on('data', function (data) {
     data = JSON.parse(data)
-    t.ok(results.shift() == data.document.id)
+    t.ok(results.shift() === data.document.id)
   })
 })
