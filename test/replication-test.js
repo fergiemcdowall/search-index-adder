@@ -94,7 +94,9 @@ test('simple replication from one index to another', function (t) {
       t.ok(true, 'data event received')
     })
     .on('end', function () {
-      t.ok(true, 'stream closed')
+      replicatorTarget.close(function(err) {
+        t.error(err)
+      })
     })
 })
 

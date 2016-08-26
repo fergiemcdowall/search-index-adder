@@ -1,6 +1,6 @@
 var fs = require('fs')
 var sia = require('../')
-var SearchIndex = require('search-index-searcher')
+var SearchIndexSearcher = require('search-index-searcher')
 var test = require('tape')
 var JSONStream = require('JSONStream')
 var indexer
@@ -53,7 +53,7 @@ test('close search-index-adder', function (t) {
 test('index should be searchable', function (t) {
   t.plan(11)
   var results = [ '9', '8', '7', '6', '5', '4', '3', '2', '10', '1' ]
-  SearchIndex({
+  SearchIndexSearcher({
     indexPath: 'test/sandbox/streamTest'
   }, function (err, si) {
     t.error(err)
