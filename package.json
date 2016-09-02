@@ -44,7 +44,7 @@
     "lodash.sortby": "^4.4.2",
     "lodash.uniq": "^4.5.0",
     "object-hash": "^1.1.2",
-    "stopword": "^0.1.0",
+    "stopword": "^0.1.1",
     "term-frequency": "0.0.10",
     "term-vector": "^0.1.2"
   },
@@ -52,7 +52,7 @@
     "JSONStream": "^1.1.4",
     "level-out": "0.0.6",
     "reuters-21578-json": "0.0.8",
-    "search-index-searcher": "0.1.0",
+    "search-index-searcher": "0.1.1",
     "standard": "^6.0.8",
     "standard-format": "^2.1.1",
     "tape": "^4.5.1"
