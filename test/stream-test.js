@@ -37,7 +37,7 @@ test('stream file to search-index', { timeout: 6000000 }, function (t) {
   fs.createReadStream(filePath)
     .pipe(JSONStream.parse())
     .pipe(indexer.defaultPipeline())
-    .pipe(indexer.createWriteStream2())
+    .pipe(indexer.add())
     .on('data', function (data) {
       t.ok(true)
     }).on('end', function () {

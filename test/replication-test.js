@@ -20,7 +20,7 @@ test('make a small search index', function (t) {
     fs.createReadStream(filePath)
       .pipe(JSONStream.parse())
       .pipe(si.defaultPipeline())
-      .pipe(si.createWriteStream2())
+      .pipe(si.add())
       .on('data', function (data) {
         t.ok(true, ' data recieved')
       })

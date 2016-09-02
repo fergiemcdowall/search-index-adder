@@ -54,7 +54,7 @@ test('transform stream file', { timeout: 6000000 }, function (t) {
         }
       }
     }))
-    .pipe(indexer.createWriteStream2(
+    .pipe(indexer.add(
       // do something?
     ))
     .on('data', function (data) {

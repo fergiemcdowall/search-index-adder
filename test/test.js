@@ -40,7 +40,7 @@ test('set seperator at field level', function (t) {
     t.error(err)
     s.pipe(JSONStream.parse())
       .pipe(indexer.defaultPipeline())
-      .pipe(indexer.createWriteStream2())
+      .pipe(indexer.add())
       .on('data', function (data) {
         t.ok(true, ' data recieved')
       })
@@ -73,7 +73,7 @@ test('simple indexing test', function (t) {
     fs.createReadStream('./node_modules/reuters-21578-json/data/fullFileStream/000.str')
       .pipe(JSONStream.parse())
       .pipe(indexer.defaultPipeline())
-      .pipe(indexer.createWriteStream2())
+      .pipe(indexer.add())
       .on('data', function (data) {
         t.ok(true, ' data recieved')
       })
@@ -114,7 +114,7 @@ test('preserve array fields in stored document', function (t) {
 
       s.pipe(JSONStream.parse())
         .pipe(indexer.defaultPipeline())
-        .pipe(indexer.createWriteStream2())
+        .pipe(indexer.add())
         .on('data', function (data) {})
         .on('end', function () {
           var q = {}

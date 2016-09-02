@@ -72,7 +72,7 @@ test('make the beatles search index', function (t) {
     beatlesStream
       .pipe(JSONStream.parse())
       .pipe(si.defaultPipeline())
-      .pipe(si.createWriteStream2())
+      .pipe(si.add())
       .on('data', function (data) {
         t.ok(true, ' data recieved')
       })
@@ -93,7 +93,7 @@ test('make the stones search index', function (t) {
     stonesStream
       .pipe(JSONStream.parse())
       .pipe(si.defaultPipeline())
-      .pipe(si.createWriteStream2())
+      .pipe(si.add())
       .on('data', function (data) {
         t.ok(true, ' data recieved')
       })
