@@ -1,9 +1,6 @@
-var _ = require('lodash')
-var da = require('distribute-array')
 var SearchIndexAdder = require('../')
 var SearchIndexSearcher = require('search-index-searcher')
 var test = require('tape')
-var async = require('async')
 var Readable = require('stream').Readable
 var JSONStream = require('JSONStream')
 var fs = require('fs')
@@ -22,7 +19,7 @@ var resultsForStarUSA = [
 ]
 
 test('set seperator at field level', function (t) {
-  t.plan(5)
+  t.plan(6)
   var batch = [{
     id: '1',
     title: 'thisxisxaxtitle',
@@ -40,6 +37,7 @@ test('set seperator at field level', function (t) {
   SearchIndexAdder({
     indexPath: 'test/sandbox/separatorTest'
   }, function (err, indexer) {
+    t.error(err)
     s.pipe(JSONStream.parse())
       .pipe(indexer.defaultPipeline())
       .pipe(indexer.createWriteStream2())
@@ -66,16 +64,12 @@ test('set seperator at field level', function (t) {
   })
 })
 
-
-
 test('simple indexing test', function (t) {
-  // var batch = require('../node_modules/reuters-21578-json/data/full/reuters-000.json')
-  t.plan(1002)
-  // t.equal(batch.length, 1000)
-
+  t.plan(1004)
   SearchIndexAdder({
     indexPath: 'test/sandbox/simpleIndexing'
   }, function (err, indexer) {
+    t.error(err)
     fs.createReadStream('./node_modules/reuters-21578-json/data/fullFileStream/000.str')
       .pipe(JSONStream.parse())
       .pipe(indexer.defaultPipeline())
@@ -85,6 +79,7 @@ test('simple indexing test', function (t) {
       })
       .on('end', function () {
         indexer.close(function (err) {
+          t.error(err)
           SearchIndexSearcher(indexer.options, function (err, searcher) {
             t.error(err)
             var q = {}
@@ -98,12 +93,11 @@ test('simple indexing test', function (t) {
               console.log(data.document.id)
               t.equals(resultsForStarUSA[i++], data.document.id)
             })
-          })  
+          })
         })
       })
   })
 })
-
 
 // TODO: make this work again
 
@@ -121,23 +115,22 @@ test('preserve array fields in stored document', function (t) {
       s.pipe(JSONStream.parse())
         .pipe(indexer.defaultPipeline())
         .pipe(indexer.createWriteStream2())
-        .on('data', function(data) {})
+        .on('data', function (data) {})
         .on('end', function () {
           var q = {}
           q.query = {
             AND: {'*': ['one']}
           }
           searcher.search(q)
-            .on('data', function(data) {
+            .on('data', function (data) {
               data = JSON.parse(data)
               t.equals(data.document.id, '1')
               t.looseEquals(data.document.anArray, ['one', 'two', 'three'])
             })
-            .on('end', function() {
+            .on('end', function () {
               t.ok(true)
             })
         })
-
     })
   })
 })

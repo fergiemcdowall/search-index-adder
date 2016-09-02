@@ -35,19 +35,15 @@ test('test stream file', function (t) {
     })
 })
 
-
 test('transform stream file', { timeout: 6000000 }, function (t) {
   t.plan(11)
-  var Readable = require('stream').Readable
-  var rs = new Readable
-  // const filePath = './node_modules/reuters-21578-json/data/fullFileStream/justTen.str'
   const filePath = './test/data.json'
   fs.createReadStream(filePath)
     .pipe(JSONStream.parse())
-    .pipe(indexer.defaultPipeline({ //do a pretty ascii table of the field options
+    .pipe(indexer.defaultPipeline({ // do a pretty ascii table of the field options
       ngram: [1],
       stopwords: sw.en,
-      //searchable, storeable, vectorType
+      // searchable, storeable, vectorType
       fieldOptions: {
         body: {
           searchable: true,
@@ -59,20 +55,19 @@ test('transform stream file', { timeout: 6000000 }, function (t) {
       }
     }))
     .pipe(indexer.createWriteStream2(
-      // do something?      
+      // do something?
     ))
-    .on('data', function(data) {
+    .on('data', function (data) {
       t.ok(true)
     })
-    .on('close', function() {
+    .on('close', function () {
       t.ok(true)
     })
 })
 
-
-test('closes indexer', function(t) {
+test('closes indexer', function (t) {
   t.plan(1)
-  indexer.close(function(err) {
+  indexer.close(function (err) {
     t.error(err)
   })
 })
@@ -102,7 +97,6 @@ test('can search', function (t) {
     })
   })
 })
-
 
 test('can search', function (t) {
   t.plan(8)
