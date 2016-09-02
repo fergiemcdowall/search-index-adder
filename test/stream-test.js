@@ -18,6 +18,7 @@ test('init indexer', function (t) {
 test('test stream file', function (t) {
   t.plan(11)
   const filePath = './node_modules/reuters-21578-json/data/fullFileStream/justTen.str'
+  // const filePath = './data.json'
   require('readline').createInterface({
     input: fs.createReadStream(filePath)
   })
@@ -32,9 +33,11 @@ test('test stream file', function (t) {
 test('stream file to search-index', { timeout: 6000000 }, function (t) {
   t.plan(12)
   const filePath = './node_modules/reuters-21578-json/data/fullFileStream/justTen.str'
+  // const filePath = './data.json'
   fs.createReadStream(filePath)
     .pipe(JSONStream.parse())
-    .pipe(indexer.createWriteStream())
+    .pipe(indexer.defaultPipeline())
+    .pipe(indexer.createWriteStream2())
     .on('data', function (data) {
       t.ok(true)
     }).on('end', function () {

@@ -19,7 +19,8 @@ test('make a small search index', function (t) {
     const filePath = './node_modules/reuters-21578-json/data/fullFileStream/justTen.str'
     fs.createReadStream(filePath)
       .pipe(JSONStream.parse())
-      .pipe(si.createWriteStream())
+      .pipe(si.defaultPipeline())
+      .pipe(si.createWriteStream2())
       .on('data', function (data) {
         t.ok(true, ' data recieved')
       })
@@ -48,7 +49,7 @@ test('simple read from replicator (no ops)', function (t) {
       i++
     })
     .on('end', function () {
-      t.equal(i, 3009)
+      t.equal(i, 3447)
     })
 })
 
@@ -60,7 +61,7 @@ test('simple read from replicator (gzip: false)', function (t) {
       i++
     })
     .on('end', function () {
-      t.equal(i, 3009)
+      t.equal(i, 3447)
     })
 })
 
@@ -74,7 +75,7 @@ test('simple read from replicator (gzip: true)', function (t) {
       i++
     })
     .on('end', function () {
-      t.equal(i, 3009)
+      t.equal(i, 3447)
     })
 })
 
@@ -116,7 +117,7 @@ test('simple read from replicated index (no ops)', function (t) {
       i++
     })
     .on('end', function () {
-      t.equal(i, 3009)
+      t.equal(i, 3447)
     })
 })
 
@@ -164,7 +165,7 @@ test('validate gzip replication', function (t) {
       i++
     })
     .on('end', function () {
-      t.equal(i, 3009)
+      t.equal(i, 3447)
     })
 })
 

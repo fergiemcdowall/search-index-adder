@@ -44,9 +44,9 @@
     "lodash.sortby": "^4.4.2",
     "lodash.uniq": "^4.5.0",
     "object-hash": "^1.1.2",
-    "search-index-deleter": "0.0.10",
-    "term-frequency": "0.0.6",
-    "term-vector": "0.0.18"
+    "stopword": "^0.1.0",
+    "term-frequency": "0.0.10",
+    "term-vector": "^0.1.2"
   },
   "devDependencies": {
     "JSONStream": "^1.1.4",

@@ -1,15 +1,18 @@
-const IndexBatch = require('./lib/addUtils.js').IndexBatch
-const DBWriteCleanStream = require('./lib/replicator.js').DBWriteCleanStream
-const DBWriteMergeStream = require('./lib/replicator.js').DBWriteMergeStream
+// const IndexBatch = require('./lib/add.js').IndexBatch
+const DBWriteCleanStream = require('./lib/replicate.js').DBWriteCleanStream
+const DBWriteMergeStream = require('./lib/replicate.js').DBWriteMergeStream
+const IngestDoc = require('./lib/pipelineStages/IngestDoc.js').IngestDoc
+const IndexBatch = require('./lib/add').IndexBatch
+const IndexBatch2 = require('./lib/add').IndexBatch2
 const _defaults = require('lodash.defaults')
-const addUtils = require('./lib/addUtils.js')
-const deleter = require('./lib/deleter.js')
+const add = require('./lib/add')
+const deleter = require('./lib/delete.js')
 
 module.exports = function (givenOptions, callback) {
-  addUtils.getOptions(givenOptions, function (err, options) {
+  add.getOptions(givenOptions, function (err, options) {
     var Indexer = {}
     Indexer.options = options
-    Indexer.options.queue = addUtils.getQueue(Indexer)
+    Indexer.options.queue = add.getQueue(Indexer)
 
     Indexer.deleteBatch = function (deleteBatch, APICallback) {
       deleter.tryDeleteBatch(options, deleteBatch, function (err) {
@@ -50,7 +53,7 @@ module.exports = function (givenOptions, callback) {
       //   callback = batchOptions
       //   batchOptions = undefined
       // }
-      addUtils.addBatchToIndex(
+      add.addBatchToIndex(
         Indexer.options.queue,
         batch,
         batchOptions,
@@ -58,9 +61,19 @@ module.exports = function (givenOptions, callback) {
         callback)
     }
 
+    Indexer.createWriteStream2 = function (batchOptions) {
+      batchOptions = _defaults(batchOptions || {}, {batchSize: 1000})
+      return new IndexBatch2(batchOptions, Indexer)
+    }
+
     Indexer.createWriteStream = function (batchOptions) {
       batchOptions = _defaults(batchOptions || {}, {batchSize: 1000})
-      return new IndexBatch(batchOptions, options)
+      return new IndexBatch(batchOptions, Indexer)
+    }
+
+    Indexer.defaultPipeline = function (batchOptions) {
+      batchOptions = _defaults(batchOptions || {}, {batchSize: 1000})
+      return new IngestDoc(batchOptions)
     }
 
     //  return Indexer

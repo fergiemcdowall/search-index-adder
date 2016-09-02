@@ -71,7 +71,8 @@ test('make the beatles search index', function (t) {
     t.error(err)
     beatlesStream
       .pipe(JSONStream.parse())
-      .pipe(si.createWriteStream())
+      .pipe(si.defaultPipeline())
+      .pipe(si.createWriteStream2())
       .on('data', function (data) {
         t.ok(true, ' data recieved')
       })
@@ -91,7 +92,8 @@ test('make the stones search index', function (t) {
     t.error(err)
     stonesStream
       .pipe(JSONStream.parse())
-      .pipe(si.createWriteStream())
+      .pipe(si.defaultPipeline())
+      .pipe(si.createWriteStream2())
       .on('data', function (data) {
         t.ok(true, ' data recieved')
       })
@@ -105,16 +107,16 @@ test('make the stones search index', function (t) {
 
 test('confirm can search as normal in beatles', function (t) {
   t.plan(6)
-  var results = [ 'Ringo', 'George', 'Paul', 'John' ]
+  var results = [ 'John', 'Paul', 'George', 'Ringo' ]
   SearchIndexSearcher({
     indexPath: 'test/sandbox/beatles'
   }, function (err, si) {
     t.error(err)
     si.search({
-      AND: [{'*': ['*']}]
+      AND: {'*': ['*']}
     }).on('data', function (data) {
       data = JSON.parse(data)
-      t.ok(data.document.name, results.shift())
+      t.equals(data.document.name, results.shift())
     }).on('end', function () {
       si.close(function (err) {
         t.error(err)
@@ -125,7 +127,7 @@ test('confirm can search as normal in beatles', function (t) {
 
 test('confirm can search as normal in stones', function (t) {
   t.plan(6)
-  var results = [ 'Ronnie', 'Charlie', 'Kieth', 'Mick' ]
+  var results = [ 'Mick', 'Kieth', 'Charlie', 'Ronnie' ]
   SearchIndexSearcher({
     indexPath: 'test/sandbox/stones'
   }, function (err, si) {
@@ -134,7 +136,7 @@ test('confirm can search as normal in stones', function (t) {
       AND: [{'*': ['*']}]
     }).on('data', function (data) {
       data = JSON.parse(data)
-      t.ok(data.document.name, results.shift())
+      t.equals(data.document.name, results.shift())
     }).on('end', function () {
       si.close(function (err) {
         t.error(err)
@@ -172,7 +174,7 @@ test('gzipped replication from beatles to supergroup', function (t) {
 
 test('supergroup contains beatles', function (t) {
   t.plan(6)
-  var results = [ 'Ringo', 'George', 'Paul', 'John' ]
+  var results = [ 'John', 'Paul', 'George', 'Ringo' ]
   SearchIndexSearcher({
     indexPath: 'test/sandbox/supergroup'
   }, function (err, si) {
@@ -181,7 +183,7 @@ test('supergroup contains beatles', function (t) {
       AND: [{'*': ['*']}]
     }).on('data', function (data) {
       data = JSON.parse(data)
-      t.ok(data.document.name, results.shift())
+      t.equals(data.document.name, results.shift())
     }).on('end', function () {
       si.close(function (err) {
         t.error(err)
@@ -219,7 +221,7 @@ test('gzipped replication of stones to supergroup', function (t) {
 
 test('open supergroup index', function (t) {
   t.plan(9)
-  var results = [ 'Ronnie', 'Ringo', 'George', 'Charlie', 'Paul', 'Kieth', 'Mick', 'John' ]
+  var results = [ 'Mick', 'Kieth', 'Charlie', 'Ronnie', 'John', 'Paul', 'George', 'Ringo' ]
   SearchIndexSearcher({
     indexPath: 'test/sandbox/supergroup'
   }, function (err, si) {
@@ -230,7 +232,7 @@ test('open supergroup index', function (t) {
       }]
     }).on('data', function (data) {
       data = JSON.parse(data)
-      t.ok(data.document.name === results.shift())
+      t.equals(data.document.name, results.shift())
     })
   })
 })
