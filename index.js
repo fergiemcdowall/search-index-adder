@@ -1,6 +1,6 @@
 const DBWriteCleanStream = require('./lib/replicate.js').DBWriteCleanStream
 const DBWriteMergeStream = require('./lib/replicate.js').DBWriteMergeStream
-const IngestDoc = require('./lib/pipelineStages/IngestDoc.js').IngestDoc
+const IngestDoc = require('./lib/pipeline.js').IngestDoc
 const IndexBatch = require('./lib/add').IndexBatch
 const _defaults = require('lodash.defaults')
 const add = require('./lib/add')
