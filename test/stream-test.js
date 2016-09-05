@@ -40,7 +40,8 @@ test('stream file to search-index', { timeout: 6000000 }, function (t) {
     .pipe(indexer.add())
     .on('data', function (data) {
       t.ok(true)
-    }).on('end', function () {
+    })
+    .on('end', function () {
       console.log('test completed')
       t.ok(true)
     })

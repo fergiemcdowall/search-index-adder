@@ -1,20 +1,38 @@
+const DBEntries = require('./lib/delete.js').DBEntries
+const DocVector = require('./lib/delete.js').DocVector
+const RecalibrateDB = require('./lib/delete.js').RecalibrateDB
+
 const DBWriteCleanStream = require('./lib/replicate.js').DBWriteCleanStream
 const DBWriteMergeStream = require('./lib/replicate.js').DBWriteMergeStream
 const IngestDoc = require('./lib/pipeline.js').IngestDoc
 const IndexBatch = require('./lib/add').IndexBatch
 const _defaults = require('lodash.defaults')
-const add = require('./lib/add')
+const bunyan = require('bunyan')
 const deleter = require('./lib/delete.js')
+const levelup = require('levelup')
+const sw = require('stopword')
+const Readable = require('stream').Readable
 
 module.exports = function (givenOptions, callback) {
-  add.getOptions(givenOptions, function (err, options) {
+  getOptions(givenOptions, function (err, options) {
     var Indexer = {}
     Indexer.options = options
 
     Indexer.deleteBatch = function (deleteBatch, APICallback) {
-      deleter.tryDeleteBatch(options, deleteBatch, function (err) {
+      deleter.tryDeleteDoc(options, deleteBatch, function (err) {
         return APICallback(err)
       })
+    }
+
+    Indexer.deleter = function(docIds) {
+      const s = new Readable()
+      docIds.forEach(function (docId) {
+        s.push(JSON.stringify(docId))
+      })
+      s.push(null)
+      return s.pipe(new DocVector(options))
+        .pipe(new DBEntries(options))
+        .pipe(new RecalibrateDB(options))
     }
 
     Indexer.flush = function (APICallback) {
@@ -57,4 +75,32 @@ module.exports = function (givenOptions, callback) {
     //  return Indexer
     return callback(err, Indexer)
   })
+}
+
+const getOptions = function (options, done) {
+  options = _defaults(options, {
+    deletable: true,
+    fieldedSearch: true,
+    store: true,
+    indexPath: 'si',
+    log: bunyan.createLogger({
+      name: 'search-index',
+      level: this.logLevel
+    }),
+    logLevel: 'error',
+    nGramLength: 1,
+    nGramSeparator: ' ',
+    separator: /[\|' \.,\-|(\n)]+/,
+    stopwords: sw.en
+  })
+  if (!options.indexes) {
+    levelup(options.indexPath || 'si', {
+      valueEncoding: 'json'
+    }, function (err, db) {
+      options.indexes = db
+      done(err, options)
+    })
+  } else {
+    done(null, options)
+  }
 }
