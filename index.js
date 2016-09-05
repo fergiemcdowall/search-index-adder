@@ -24,7 +24,7 @@ module.exports = function (givenOptions, callback) {
       })
     }
 
-    Indexer.deleter = function(docIds) {
+    Indexer.deleter = function (docIds) {
       const s = new Readable()
       docIds.forEach(function (docId) {
         s.push(JSON.stringify(docId))

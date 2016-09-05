@@ -20,9 +20,8 @@ const data = [
   {
     id: 'four',
     text: 'the fourth doc'
-  }  
+  }
 ]
-
 
 test('make the search index', function (t) {
   t.plan(7)
@@ -80,7 +79,7 @@ test('can delete', function (t) {
         console.log(data)
       })
       .on('end', function () {
-        si.close(function(err) {
+        si.close(function (err) {
           t.error(err)
         })
       })
