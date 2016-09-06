@@ -29,8 +29,8 @@
     "lodash.defaults": "^4.2.0",
     "object-hash": "^1.1.4",
     "stopword": "^0.1.1",
-    "term-frequency": "0.0.10",
-    "term-vector": "^0.1.2"
+    "term-frequency": "0.0.12",
+    "term-vector": "0.1.2"
   },
   "devDependencies": {
     "JSONStream": "^1.1.4",
