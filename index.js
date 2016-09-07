@@ -5,7 +5,7 @@ const RecalibrateDB = require('./lib/delete.js').RecalibrateDB
 const DBWriteCleanStream = require('./lib/replicate.js').DBWriteCleanStream
 const DBWriteMergeStream = require('./lib/replicate.js').DBWriteMergeStream
 const IngestDoc = require('./lib/pipeline.js').IngestDoc
-const IndexBatch = require('./lib/add').IndexBatch
+const IndexBatch = require('./lib/add.js').IndexBatch
 const _defaults = require('lodash.defaults')
 const bunyan = require('bunyan')
 const deleter = require('./lib/delete.js')
@@ -64,6 +64,8 @@ module.exports = function (givenOptions, callback) {
 
     Indexer.add = function (batchOptions) {
       batchOptions = _defaults(batchOptions || {}, {batchSize: 1000})
+      // this should probably not be instantiated on every call in
+      // order to better deal with concurrent adds
       return new IndexBatch(batchOptions, Indexer)
     }
 
