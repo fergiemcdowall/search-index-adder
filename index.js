@@ -63,14 +63,14 @@ module.exports = function (givenOptions, callback) {
     }
 
     Indexer.add = function (batchOptions) {
-      batchOptions = _defaults(batchOptions || {}, {batchSize: 1000})
+      batchOptions = _defaults(batchOptions || {}, options)
       // this should probably not be instantiated on every call in
       // order to better deal with concurrent adds
       return new IndexBatch(batchOptions, Indexer)
     }
 
     Indexer.defaultPipeline = function (batchOptions) {
-      batchOptions = _defaults(batchOptions || {}, {batchSize: 1000})
+      batchOptions = _defaults(batchOptions || {}, options)
       return new IngestDoc(batchOptions)
     }
 
@@ -82,8 +82,11 @@ module.exports = function (givenOptions, callback) {
 const getOptions = function (options, done) {
   options = _defaults(options, {
     deletable: true,
+    batchSize: 1000,
     fieldedSearch: true,
-    store: true,
+    fieldOptions: {},
+    storeable: true,
+    searchable: true,
     indexPath: 'si',
     log: bunyan.createLogger({
       name: 'search-index',
