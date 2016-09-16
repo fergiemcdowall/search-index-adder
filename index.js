@@ -85,6 +85,7 @@ const getOptions = function (options, done) {
     batchSize: 1000,
     fieldedSearch: true,
     fieldOptions: {},
+    preserveCase: false,
     storeable: true,
     searchable: true,
     indexPath: 'si',
