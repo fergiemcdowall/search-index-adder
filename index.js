@@ -89,15 +89,16 @@ const getOptions = function (options, done) {
     storeable: true,
     searchable: true,
     indexPath: 'si',
-    log: bunyan.createLogger({
-      name: 'search-index',
-      level: this.logLevel
-    }),
     logLevel: 'error',
     nGramLength: 1,
     nGramSeparator: ' ',
     separator: /[\|' \.,\-|(\n)]+/,
-    stopwords: sw.en
+    stopwords: sw.en,
+    weight: 0
+  })
+  options.log = bunyan.createLogger({
+    name: 'search-index',
+    level: options.logLevel
   })
   if (!options.indexes) {
     levelup(options.indexPath || 'si', {
