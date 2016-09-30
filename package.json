@@ -1,6 +1,6 @@
 {
   "name": "search-index-adder",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "The indexing module for search-index",
   "main": "index.js",
   "scripts": {
@@ -36,7 +36,7 @@
     "JSONStream": "^1.1.4",
     "level-out": "0.0.6",
     "reuters-21578-json": "0.0.8",
-    "search-index-searcher": "0.1.8",
+    "search-index-searcher": "0.1.9",
     "standard": "8.1.0",
     "tape": "^4.5.1"
   }

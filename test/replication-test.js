@@ -4,7 +4,6 @@ const SearchIndexSearcher = require('search-index-searcher')
 const fs = require('fs')
 const sandbox = process.env.SANDBOX || 'test/sandbox'
 const test = require('tape')
-const zlib = require('zlib')
 
 const indexAddress = sandbox + '/replicate-test'
 
@@ -45,32 +44,6 @@ test('simple read from replicator (no ops)', function (t) {
   t.plan(1)
   var i = 0
   replicator.dbReadStream()
-    .on('data', function (data) {
-      i++
-    })
-    .on('end', function () {
-      t.equal(i, 3085)
-    })
-})
-
-test('simple read from replicator (gzip: false)', function (t) {
-  t.plan(1)
-  var i = 0
-  replicator.dbReadStream({gzip: false})
-    .on('data', function (data) {
-      i++
-    })
-    .on('end', function () {
-      t.equal(i, 3085)
-    })
-})
-
-test('simple read from replicator (gzip: true)', function (t) {
-  t.plan(1)
-  var i = 0
-  replicator.dbReadStream({gzip: true})
-    .pipe(zlib.createGunzip())
-    .pipe(JSONStream.parse())
     .on('data', function (data) {
       i++
     })
@@ -129,11 +102,9 @@ test('initialise replication target2', function (t) {
   })
 })
 
-test('gzipped replication from one index to another', function (t) {
+test('replication from one index to another', function (t) {
   t.plan(1)
-  replicator.dbReadStream({gzip: true})
-    .pipe(zlib.createGunzip())
-    .pipe(JSONStream.parse())
+  replicator.dbReadStream()
     .pipe(replicatorTarget2.dbWriteStream())
     .on('data', function (data) {
       console.log('BOOOOOOOOOOM')

@@ -3,7 +3,6 @@ const SearchIndexSearcher = require('search-index-searcher')
 const SearchIndexAdder = require('../')
 const s = require('stream')
 const test = require('tape')
-const zlib = require('zlib')
 
 const stones = [
   {
@@ -163,9 +162,7 @@ test('gzipped replication from beatles to supergroup', function (t) {
       indexPath: 'test/sandbox/beatles'
     }, function (err, beatles) {
       t.error(err)
-      beatles.dbReadStream({gzip: true})
-        .pipe(zlib.createGunzip())
-        .pipe(JSONStream.parse())
+      beatles.dbReadStream()
         .pipe(supergroup.dbWriteStream())
         .on('data', function () {})
         .on('end', function () {
@@ -210,9 +207,7 @@ test('gzipped replication of stones to supergroup', function (t) {
       indexPath: 'test/sandbox/stones'
     }, function (err, stones) {
       t.error(err)
-      stones.dbReadStream({gzip: true})
-        .pipe(zlib.createGunzip())
-        .pipe(JSONStream.parse())
+      stones.dbReadStream()
         .pipe(supergroup.dbWriteStream())
         .on('data', function () {})
         .on('end', function () {
