@@ -9,6 +9,7 @@ const IndexBatch = require('./lib/add.js').IndexBatch
 const _defaults = require('lodash.defaults')
 const bunyan = require('bunyan')
 const deleter = require('./lib/delete.js')
+const leveldown = require('leveldown')
 const levelup = require('levelup')
 const sw = require('stopword')
 const Readable = require('stream').Readable
@@ -102,7 +103,8 @@ const getOptions = function (options, done) {
   })
   if (!options.indexes) {
     levelup(options.indexPath || 'si', {
-      valueEncoding: 'json'
+      valueEncoding: 'json',
+      db: leveldown
     }, function (err, db) {
       options.indexes = db
       done(err, options)
