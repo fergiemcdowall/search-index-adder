@@ -107,8 +107,7 @@ test('replication from one index to another', function (t) {
   replicator.dbReadStream()
     .pipe(replicatorTarget2.dbWriteStream())
     .on('data', function (data) {
-      console.log('BOOOOOOOOOOM')
-    // data
+      data
     })
     .on('error', function (err) {
       console.log(err)

@@ -164,7 +164,6 @@ test('can search for id', function (t) {
         ]
       }
     ).on('data', function (data) {
-      console.log('BOOOOOOOOOOOM')
       data = JSON.parse(data)
       t.equal(data.document.id, results.shift())
     }).on('end', function () {
