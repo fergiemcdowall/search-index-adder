@@ -1,8 +1,10 @@
-const util = require('util')
 const Transform = require('stream').Transform
+const _defaults = require('lodash.defaults')
+const util = require('util')
 
 const LowCase = function (options) {
-  this.options = options
+  this.options = options || {}
+  this.options.fieldOptions = this.options.fieldOptions || {}
   Transform.call(this, { objectMode: true })
 }
 exports.LowCase = LowCase
@@ -11,7 +13,14 @@ LowCase.prototype._transform = function (doc, encoding, end) {
   doc = JSON.parse(doc)
   for (var fieldName in doc.normalised) {
     if (fieldName === 'id') continue  // dont lowcase ID field
-    doc.normalised[fieldName] = doc.normalised[fieldName].toLowerCase()
+    var fieldOptions = _defaults(
+      this.options.fieldOptions[fieldName] || {},  // TODO- this is wrong
+      {
+        preserveCase: this.options.preserveCase
+      })
+    if (!fieldOptions.preserveCase) {
+      doc.normalised[fieldName] = doc.normalised[fieldName].toLowerCase()
+    }
   }
   this.push(JSON.stringify(doc))
   return end()

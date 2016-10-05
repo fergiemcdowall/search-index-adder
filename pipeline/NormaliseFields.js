@@ -14,8 +14,9 @@ NormaliseFields.prototype._transform = function (doc, encoding, end) {
     // characters
     if (Object.prototype.toString.call(doc.normalised[fieldName]) !== '[object String]') {
       doc.normalised[fieldName] = JSON.stringify(doc.normalised[fieldName])
-        .split(/[\[\],{}:"]+/).join(' ').trim()
+        .split(/[\[\],{}:"]+/).join(' ')
     }
+    doc.normalised[fieldName] = doc.normalised[fieldName].trim()
   }
   this.push(JSON.stringify(doc))
   return end()

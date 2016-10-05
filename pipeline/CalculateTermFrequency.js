@@ -25,13 +25,14 @@ CalculateTermFrequency.prototype._transform = function (doc, encoding, end) {
       this.options.fieldOptions[fieldName] || {},  // TODO- this is wrong
       {
         fieldedSearch: this.options.fieldedSearch, // can search on this field individually
+        nGramLength: this.options.nGramLength,
         searchable: this.options.searchable,       // included in the wildcard search ('*')
         weight: this.options.weight
       })
 
     if (fieldOptions.fieldedSearch || fieldOptions.searchable) {
       doc.vector[fieldName] = tf.getTermFrequency(
-        tv.getVector(field), {
+        tv.getVector(field, fieldOptions.nGramLength), {
           scheme: tf.doubleNormalization0point5,
           weight: fieldOptions.weight
         }

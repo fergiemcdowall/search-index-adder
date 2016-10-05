@@ -17,9 +17,12 @@ RemoveStopWords.prototype._transform = function (doc, encoding, end) {
       {
         stopwords: this.options.stopwords || []
       })
+    // remove stopwords
     doc.normalised[fieldName] =
       doc.normalised[fieldName].filter(function (item) {
-        return fieldOptions.stopwords.indexOf(item)
+        return (fieldOptions.stopwords.indexOf(item) === -1)
+      }).filter(function (i) {  // strip out empty elements
+        return i
       })
   }
   this.push(JSON.stringify(doc))

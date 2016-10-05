@@ -19,6 +19,7 @@ FieldedSearch.prototype._transform = function (doc, encoding, end) {
       })
     if (!fieldOptions.fieldedSearch && fieldName !== '*') delete doc.vector[fieldName]
   }
+  // console.log(JSON.stringify(doc, null, 2))
   this.push(JSON.stringify(doc))
   return end()
 }

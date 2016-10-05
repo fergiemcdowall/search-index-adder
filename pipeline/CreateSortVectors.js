@@ -1,4 +1,5 @@
 const tf = require('term-frequency')
+const tv = require('term-vector')
 const Transform = require('stream').Transform
 const _defaults = require('lodash.defaults')
 const util = require('util')
@@ -24,11 +25,10 @@ CreateSortVectors.prototype._transform = function (doc, encoding, end) {
       {
         sortable: this.options.sortable // Should this field be sortable
       })
-
     if (fieldOptions.sortable) {
       doc.vector[fieldName] = tf.getTermFrequency(
-        doc.normalised[fieldName],
-        { scheme: tf.selfNumeric }
+        tv.getVector(doc.normalised[fieldName]),
+        { scheme: tf.selfString }
       ).reduce(objectify, {})
     }
   }
