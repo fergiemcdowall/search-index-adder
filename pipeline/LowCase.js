@@ -9,7 +9,7 @@ exports.LowCase = LowCase
 util.inherits(LowCase, Transform)
 LowCase.prototype._transform = function (doc, encoding, end) {
   doc = JSON.parse(doc)
-  for (fieldName in doc.normalised) {
+  for (var fieldName in doc.normalised) {
     if (fieldName === 'id') continue  // dont lowcase ID field
     doc.normalised[fieldName] = doc.normalised[fieldName].toLowerCase()
   }

@@ -6,7 +6,7 @@
   "scripts": {
     "dist": "browserify index.js --standalone SearchIndexAdder > dist/search-index-adder.js",
     "dist-min": "npm run dist && cat dist/search-index-adder.js | uglifyjs -c dead_code > dist/search-index-adder.min.js",
-    "test": "rm -rf test/sandbox && mkdir test/sandbox && tape test/*.js && standard test/*.js lib/*",
+    "test": "rm -rf test/sandbox && mkdir test/sandbox && tape test/*.js && standard test/*.js lib/* pipeline/*.js",
     "stress-test": "rm -rf test/sandbox && mkdir test/sandbox && node --max_old_space_size=200 test/stresstest/stress-test.js"
   },
   "repository": {

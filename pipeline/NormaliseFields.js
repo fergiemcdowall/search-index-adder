@@ -9,7 +9,7 @@ exports.NormaliseFields = NormaliseFields
 util.inherits(NormaliseFields, Transform)
 NormaliseFields.prototype._transform = function (doc, encoding, end) {
   doc = JSON.parse(doc)
-  for (fieldName in doc.normalised) {
+  for (var fieldName in doc.normalised) {
     // if the input object is not a string: jsonify and split on JSON
     // characters
     if (Object.prototype.toString.call(doc.normalised[fieldName]) !== '[object String]') {

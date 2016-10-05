@@ -3,7 +3,8 @@ const _defaults = require('lodash.defaults')
 const util = require('util')
 
 const CreateCompositeVector = function (options) {
-  this.options = options
+  this.options = options || {}
+  this.options.fieldOptions = this.options.fieldOptions || {}
   Transform.call(this, { objectMode: true })
 }
 exports.CreateCompositeVector = CreateCompositeVector
@@ -11,7 +12,7 @@ util.inherits(CreateCompositeVector, Transform)
 CreateCompositeVector.prototype._transform = function (doc, encoding, end) {
   doc = JSON.parse(doc)
   doc.vector['*'] = {}
-  for (fieldName in doc.vector) {
+  for (var fieldName in doc.vector) {
     var fieldOptions = _defaults(
       this.options.fieldOptions[fieldName] || {},  // TODO- this is wrong
       {

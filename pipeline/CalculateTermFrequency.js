@@ -11,14 +11,15 @@ const objectify = function (result, item) {
 }
 
 const CalculateTermFrequency = function (options) {
-  this.options = options
+  this.options = options || {}
+  this.options.fieldOptions = this.options.fieldOptions || {}
   Transform.call(this, { objectMode: true })
 }
 exports.CalculateTermFrequency = CalculateTermFrequency
 util.inherits(CalculateTermFrequency, Transform)
 CalculateTermFrequency.prototype._transform = function (doc, encoding, end) {
   doc = JSON.parse(doc)
-  for (fieldName in doc.normalised) {
+  for (var fieldName in doc.normalised) {
     var field = doc.normalised[fieldName]
     var fieldOptions = _defaults(
       this.options.fieldOptions[fieldName] || {},  // TODO- this is wrong
@@ -27,7 +28,7 @@ CalculateTermFrequency.prototype._transform = function (doc, encoding, end) {
         searchable: this.options.searchable,       // included in the wildcard search ('*')
         weight: this.options.weight
       })
-    
+
     if (fieldOptions.fieldedSearch || fieldOptions.searchable) {
       doc.vector[fieldName] = tf.getTermFrequency(
         tv.getVector(field), {

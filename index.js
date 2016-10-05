@@ -6,16 +6,6 @@ const DBWriteCleanStream = require('./lib/replicate.js').DBWriteCleanStream
 const DBWriteMergeStream = require('./lib/replicate.js').DBWriteMergeStream
 // const IngestDoc = require('./lib/pipeline.js').IngestDoc
 
-const IngestDoc = require('./pipeline/IngestDoc.js').IngestDoc
-const LowCase = require('./pipeline/LowCase.js').LowCase
-const NormaliseFields = require('./pipeline/NormaliseFields.js').NormaliseFields
-const Tokeniser = require('./pipeline/Tokeniser.js').Tokeniser
-const RemoveStopWords = require('./pipeline/RemoveStopWords.js').RemoveStopWords
-const CreateStoredDocument = require('./pipeline/CreateStoredDocument.js').CreateStoredDocument
-const CreateCompositeVector = require('./pipeline/CreateCompositeVector.js').CreateCompositeVector
-const CreateSortVectors = require('./pipeline/CreateSortVectors.js').CreateSortVectors
-const CalculateTermFrequency = require('./pipeline/CalculateTermFrequency.js').CalculateTermFrequency
-const FieldedSearch = require('./pipeline/FieldedSearch.js').FieldedSearch
 
 const IndexBatch = require('./lib/add.js').IndexBatch
 const _defaults = require('lodash.defaults')
@@ -27,10 +17,70 @@ const pumpify = require('pumpify')
 const sw = require('stopword')
 const Readable = require('stream').Readable
 
+
+const pipeline = {}
+pipeline.IngestDoc = require('./pipeline/IngestDoc.js').IngestDoc
+pipeline.LowCase = require('./pipeline/LowCase.js').LowCase
+pipeline.NormaliseFields = require('./pipeline/NormaliseFields.js').NormaliseFields
+pipeline.Tokeniser = require('./pipeline/Tokeniser.js').Tokeniser
+pipeline.RemoveStopWords = require('./pipeline/RemoveStopWords.js').RemoveStopWords
+pipeline.CreateStoredDocument = require('./pipeline/CreateStoredDocument.js').CreateStoredDocument
+pipeline.CreateCompositeVector = require('./pipeline/CreateCompositeVector.js').CreateCompositeVector
+pipeline.CreateSortVectors = require('./pipeline/CreateSortVectors.js').CreateSortVectors
+pipeline.CalculateTermFrequency = require('./pipeline/CalculateTermFrequency.js').CalculateTermFrequency
+pipeline.FieldedSearch = require('./pipeline/FieldedSearch.js').FieldedSearch
+pipeline.Spy = require('./pipeline/Spy.js').Spy
+
+
+
 module.exports = function (givenOptions, callback) {
   getOptions(givenOptions, function (err, options) {
     var Indexer = {}
     Indexer.options = options
+
+    Indexer.add = function (batchOptions) {
+      batchOptions = _defaults(batchOptions || {}, options)
+      // this should probably not be instantiated on every call in
+      // order to better deal with concurrent adds
+      return new IndexBatch(batchOptions, Indexer)
+    }
+
+    Indexer.close = function (callback) {
+      options.indexes.close(function (err) {
+        while (!options.indexes.isClosed()) {
+          options.log.debug('closing...')
+        }
+        if (options.indexes.isClosed()) {
+          options.log.debug('closed...')
+          callback(err)
+        }
+      })
+    }
+
+    Indexer.dbWriteStream = function (streamOps) {
+      streamOps = _defaults(streamOps || {}, { merge: true })
+      if (streamOps.merge === true) {
+        return new DBWriteMergeStream(options)
+      } else {
+        return new DBWriteCleanStream(options)
+      }
+    }
+
+    Indexer.defaultPipeline = function (batchOptions) {
+      batchOptions = _defaults(batchOptions || {}, options)
+      return pumpify.obj(
+        new pipeline.IngestDoc(batchOptions),
+        new pipeline.CreateStoredDocument(batchOptions),
+        new pipeline.NormaliseFields(batchOptions),
+        new pipeline.LowCase(batchOptions),
+        new pipeline.Tokeniser(batchOptions),
+        new pipeline.RemoveStopWords(batchOptions),
+        new pipeline.CalculateTermFrequency(batchOptions),
+        new pipeline.CreateCompositeVector(batchOptions),
+        new pipeline.CreateSortVectors(batchOptions),
+        new pipeline.FieldedSearch(batchOptions)
+      )
+    }
 
     Indexer.deleteBatch = function (deleteBatch, APICallback) {
       deleter.tryDeleteDoc(options, deleteBatch, function (err) {
@@ -55,54 +105,7 @@ module.exports = function (givenOptions, callback) {
       })
     }
 
-    Indexer.dbWriteStream = function (streamOps) {
-      streamOps = _defaults(streamOps || {}, { merge: true })
-      if (streamOps.merge === true) {
-        return new DBWriteMergeStream(options)
-      } else {
-        return new DBWriteCleanStream(options)
-      }
-    }
-
-    Indexer.close = function (callback) {
-      options.indexes.close(function (err) {
-        while (!options.indexes.isClosed()) {
-          options.log.debug('closing...')
-        }
-        if (options.indexes.isClosed()) {
-          options.log.debug('closed...')
-          callback(err)
-        }
-      })
-    }
-
-    Indexer.add = function (batchOptions) {
-      batchOptions = _defaults(batchOptions || {}, options)
-      // this should probably not be instantiated on every call in
-      // order to better deal with concurrent adds
-      return new IndexBatch(batchOptions, Indexer)
-    }
-
-    Indexer.defaultPipeline = function (batchOptions) {
-      batchOptions = _defaults(batchOptions || {}, options)
-      // IngestDoc: create structure, stringify all fields
-      // LowCase: bump strings down to lowercase
-      // Tokeniser: tokenise strings
-      // CreateTermFrequencyVectors: create term frequency vectors
-      // CreateSortVectors: create sort vectors
-      return pumpify.obj(
-        new IngestDoc(batchOptions),
-        new CreateStoredDocument(batchOptions),
-        new NormaliseFields(batchOptions),
-        new LowCase(batchOptions),
-        new Tokeniser(batchOptions),
-        new RemoveStopWords(batchOptions),
-        new CalculateTermFrequency(batchOptions),
-        new CreateCompositeVector(batchOptions),
-        new CreateSortVectors(batchOptions),
-        new FieldedSearch(batchOptions)
-      )
-    }
+    Indexer.pipeline = pipeline
 
     //  return Indexer
     return callback(err, Indexer)
