@@ -97,6 +97,9 @@ test('initialize a search index with no fielded search', function (t) {
     t.error(err)
     getReadStream().pipe(JSONStream.parse())
       .pipe(indexer.defaultPipeline())
+      // .on('data', function(data) {
+      //   console.log(JSON.parse(data, null, 2))
+      // })
       .pipe(indexer.add())
       .on('data', function (data) {
         t.ok(true, ' data recieved')

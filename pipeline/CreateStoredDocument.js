@@ -1,0 +1,28 @@
+const tv = require('term-vector')
+const tf = require('term-frequency')
+const Transform = require('stream').Transform
+const _defaults = require('lodash.defaults')
+const util = require('util')
+
+const CreateStoredDocument = function (options) {
+  this.options = options
+  Transform.call(this, { objectMode: true })
+}
+exports.CreateStoredDocument = CreateStoredDocument
+util.inherits(CreateStoredDocument, Transform)
+CreateStoredDocument.prototype._transform = function (doc, encoding, end) {
+  doc = JSON.parse(doc)
+  for (fieldName in doc.raw) {
+    var fieldOptions = _defaults(
+      this.options.fieldOptions[fieldName] || {},  // TODO- this is wrong
+      {
+        storeable: this.options.storeable, // Store a cache of this field in the index
+      })
+    if (fieldName === 'id') fieldOptions.storeable = true
+    if (fieldOptions.storeable) {
+      doc.stored[fieldName] = doc.raw[fieldName]
+    }    
+  }
+  this.push(JSON.stringify(doc))
+  return end()
+}

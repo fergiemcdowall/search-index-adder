@@ -40,7 +40,7 @@ test('transform stream file', { timeout: 6000000 }, function (t) {
   const filePath = './test/data.json'
   fs.createReadStream(filePath)
     .pipe(JSONStream.parse())
-    .pipe(indexer.defaultPipeline({ // do a pretty ascii table of the field options
+    .pipe(indexer.defaultPipeline({
       ngram: [1],
       stopwords: sw.en,
       // searchable, storeable, vectorType
@@ -54,9 +54,7 @@ test('transform stream file', { timeout: 6000000 }, function (t) {
         }
       }
     }))
-    .pipe(indexer.add(
-      // do something?
-    ))
+    .pipe(indexer.add())
     .on('data', function (data) {
       t.ok(true)
     })

@@ -4,13 +4,26 @@ const RecalibrateDB = require('./lib/delete.js').RecalibrateDB
 
 const DBWriteCleanStream = require('./lib/replicate.js').DBWriteCleanStream
 const DBWriteMergeStream = require('./lib/replicate.js').DBWriteMergeStream
-const IngestDoc = require('./lib/pipeline.js').IngestDoc
+// const IngestDoc = require('./lib/pipeline.js').IngestDoc
+
+const IngestDoc = require('./pipeline/IngestDoc.js').IngestDoc
+const LowCase = require('./pipeline/LowCase.js').LowCase
+const NormaliseFields = require('./pipeline/NormaliseFields.js').NormaliseFields
+const Tokeniser = require('./pipeline/Tokeniser.js').Tokeniser
+const RemoveStopWords = require('./pipeline/RemoveStopWords.js').RemoveStopWords
+const CreateStoredDocument = require('./pipeline/CreateStoredDocument.js').CreateStoredDocument
+const CreateCompositeVector = require('./pipeline/CreateCompositeVector.js').CreateCompositeVector
+const CreateSortVectors = require('./pipeline/CreateSortVectors.js').CreateSortVectors
+const CalculateTermFrequency = require('./pipeline/CalculateTermFrequency.js').CalculateTermFrequency
+const FieldedSearch = require('./pipeline/FieldedSearch.js').FieldedSearch
+
 const IndexBatch = require('./lib/add.js').IndexBatch
 const _defaults = require('lodash.defaults')
 const bunyan = require('bunyan')
 const deleter = require('./lib/delete.js')
 const leveldown = require('leveldown')
 const levelup = require('levelup')
+const pumpify = require('pumpify')
 const sw = require('stopword')
 const Readable = require('stream').Readable
 
@@ -72,7 +85,23 @@ module.exports = function (givenOptions, callback) {
 
     Indexer.defaultPipeline = function (batchOptions) {
       batchOptions = _defaults(batchOptions || {}, options)
-      return new IngestDoc(batchOptions)
+      // IngestDoc: create structure, stringify all fields
+      // LowCase: bump strings down to lowercase
+      // Tokeniser: tokenise strings
+      // CreateTermFrequencyVectors: create term frequency vectors
+      // CreateSortVectors: create sort vectors
+      return pumpify.obj(
+        new IngestDoc(batchOptions),
+        new CreateStoredDocument(batchOptions),
+        new NormaliseFields(batchOptions),
+        new LowCase(batchOptions),
+        new Tokeniser(batchOptions),
+        new RemoveStopWords(batchOptions),
+        new CalculateTermFrequency(batchOptions),
+        new CreateCompositeVector(batchOptions),
+        new CreateSortVectors(batchOptions),
+        new FieldedSearch(batchOptions)
+      )
     }
 
     //  return Indexer
