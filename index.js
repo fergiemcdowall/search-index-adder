@@ -8,30 +8,15 @@ const DBWriteMergeStream = require('./lib/replicate.js').DBWriteMergeStream
 
 
 const IndexBatch = require('./lib/add.js').IndexBatch
+const Readable = require('stream').Readable
 const _defaults = require('lodash.defaults')
 const bunyan = require('bunyan')
 const deleter = require('./lib/delete.js')
+const docProc = require('docProc')
 const leveldown = require('leveldown')
 const levelup = require('levelup')
 const pumpify = require('pumpify')
 const sw = require('stopword')
-const Readable = require('stream').Readable
-
-
-const pipeline = {}
-pipeline.IngestDoc = require('./pipeline/IngestDoc.js').IngestDoc
-pipeline.LowCase = require('./pipeline/LowCase.js').LowCase
-pipeline.NormaliseFields = require('./pipeline/NormaliseFields.js').NormaliseFields
-pipeline.Tokeniser = require('./pipeline/Tokeniser.js').Tokeniser
-pipeline.RemoveStopWords = require('./pipeline/RemoveStopWords.js').RemoveStopWords
-pipeline.CreateStoredDocument = require('./pipeline/CreateStoredDocument.js').CreateStoredDocument
-pipeline.CreateCompositeVector = require('./pipeline/CreateCompositeVector.js').CreateCompositeVector
-pipeline.CreateSortVectors = require('./pipeline/CreateSortVectors.js').CreateSortVectors
-pipeline.CalculateTermFrequency = require('./pipeline/CalculateTermFrequency.js').CalculateTermFrequency
-pipeline.FieldedSearch = require('./pipeline/FieldedSearch.js').FieldedSearch
-pipeline.Spy = require('./pipeline/Spy.js').Spy
-
-
 
 module.exports = function (givenOptions, callback) {
   getOptions(givenOptions, function (err, options) {
@@ -68,18 +53,7 @@ module.exports = function (givenOptions, callback) {
 
     Indexer.defaultPipeline = function (batchOptions) {
       batchOptions = _defaults(batchOptions || {}, options)
-      return pumpify.obj(
-        new pipeline.IngestDoc(batchOptions),
-        new pipeline.CreateStoredDocument(batchOptions),
-        new pipeline.NormaliseFields(batchOptions),
-        new pipeline.LowCase(batchOptions),
-        new pipeline.Tokeniser(batchOptions),
-        new pipeline.RemoveStopWords(batchOptions),
-        new pipeline.CalculateTermFrequency(batchOptions),
-        new pipeline.CreateCompositeVector(batchOptions),
-        new pipeline.CreateSortVectors(batchOptions),
-        new pipeline.FieldedSearch(batchOptions)
-      )
+      return docProc.pipeline(batchOptions)
     }
 
     Indexer.deleteBatch = function (deleteBatch, APICallback) {
@@ -104,8 +78,6 @@ module.exports = function (givenOptions, callback) {
         return APICallback(err)
       })
     }
-
-    Indexer.pipeline = pipeline
 
     //  return Indexer
     return callback(err, Indexer)

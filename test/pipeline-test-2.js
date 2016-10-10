@@ -2,6 +2,7 @@ const JSONStream = require('JSONStream')
 const Readable = require('stream').Readable
 const SearchIndexAdder = require('../')
 const SearchIndexSearcher = require('search-index-searcher')
+const docProc = require('docproc')
 const pumpify = require('pumpify')
 const test = require('tape')
 
@@ -58,15 +59,15 @@ test('make the search index, removing the pipeline stage that bumps text to lowe
     s.pipe(JSONStream.parse())
       .pipe(pumpify.obj(
         // the LowerCase stage is removed
-        new si.pipeline.IngestDoc(si.options),
-        new si.pipeline.CreateStoredDocument(si.options),
-        new si.pipeline.NormaliseFields(si.options),
-        new si.pipeline.Tokeniser(si.options),
-        new si.pipeline.RemoveStopWords(si.options),
-        new si.pipeline.CalculateTermFrequency(si.options),
-        new si.pipeline.CreateCompositeVector(si.options),
-        new si.pipeline.CreateSortVectors(si.options),
-        new si.pipeline.FieldedSearch(si.options)
+        new docProc.IngestDoc(si.options),
+        new docProc.CreateStoredDocument(si.options),
+        new docProc.NormaliseFields(si.options),
+        new docProc.Tokeniser(si.options),
+        new docProc.RemoveStopWords(si.options),
+        new docProc.CalculateTermFrequency(si.options),
+        new docProc.CreateCompositeVector(si.options),
+        new docProc.CreateSortVectors(si.options),
+        new docProc.FieldedSearch(si.options)
       ))
       .pipe(si.add())
       .on('data', function (data) {
