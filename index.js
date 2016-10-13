@@ -1,14 +1,10 @@
 const DBEntries = require('./lib/delete.js').DBEntries
-const DocVector = require('./lib/delete.js').DocVector
-const RecalibrateDB = require('./lib/delete.js').RecalibrateDB
-
 const DBWriteCleanStream = require('./lib/replicate.js').DBWriteCleanStream
 const DBWriteMergeStream = require('./lib/replicate.js').DBWriteMergeStream
-// const IngestDoc = require('./lib/pipeline.js').IngestDoc
-
-
+const DocVector = require('./lib/delete.js').DocVector
 const IndexBatch = require('./lib/add.js').IndexBatch
 const Readable = require('stream').Readable
+const RecalibrateDB = require('./lib/delete.js').RecalibrateDB
 const _defaults = require('lodash.defaults')
 const bunyan = require('bunyan')
 const deleter = require('./lib/delete.js')
@@ -16,7 +12,6 @@ const docProc = require('docproc')
 const leveldown = require('leveldown')
 const levelup = require('levelup')
 const pumpify = require('pumpify')
-const sw = require('stopword')
 
 module.exports = function (givenOptions, callback) {
   getOptions(givenOptions, function (err, options) {
@@ -97,8 +92,8 @@ const getOptions = function (options, done) {
     logLevel: 'error',
     nGramLength: 1,
     nGramSeparator: ' ',
-    separator: /[\|' \.,\-|(\n)]+/,
-    stopwords: sw.en,
+    separator: /\\n|[\|' ><\.,\-|]+|\\u0003/,
+    stopwords: [],
     weight: 0
   })
   options.log = bunyan.createLogger({

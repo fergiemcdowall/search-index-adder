@@ -1,6 +1,6 @@
 {
   "name": "search-index-adder",
-  "version": "0.1.13",
+  "version": "0.1.14",
   "description": "The indexing module for search-index",
   "main": "index.js",
   "scripts": {
@@ -29,22 +29,22 @@
   },
   "dependencies": {
     "bunyan": "^1.8.1",
-    "docproc": "0.0.3",
-    "leveldown": "1.5.0",
+    "docproc": "^0.0.5",
+    "leveldown": "^1.5.0",
     "levelup": "^1.3.3",
-    "lodash.defaults": "4.2.0",
+    "lodash.defaults": "^4.2.0",
     "pumpify": "^1.3.5",
-    "stopword": "^0.1.1",
-    "term-frequency": "0.0.13",
-    "term-vector": "0.1.2"
+    "term-frequency": "^0.0.13",
+    "term-vector": "^0.1.2"
   },
   "devDependencies": {
     "JSONStream": "^1.1.4",
     "browserify": "^13.1.0",
     "level-js": "^2.2.4",
-    "reuters-21578-json": "0.0.8",
-    "search-index-searcher": "0.1.9",
-    "standard": "8.1.0",
-    "tape": "^4.5.1"
+    "reuters-21578-json": "^0.0.8",
+    "search-index-searcher": "^0.1.10",
+    "standard": "^8.4.0",
+    "stopword": "^0.1.1",
+    "tape": "^4.6.2"
   }
 }

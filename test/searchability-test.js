@@ -2,7 +2,7 @@ const JSONStream = require('JSONStream')
 const Readable = require('stream').Readable
 const SearchIndexAdder = require('../')
 const SearchIndexSearcher = require('search-index-searcher')
-const logLevel = process.env.NODE_ENV || 'info'
+const logLevel = process.env.NODE_ENV || 'error'
 const sandbox = process.env.SANDBOX || 'test/sandbox'
 const test = require('tape')
 
@@ -95,10 +95,11 @@ test('initialize a search index with no fielded search', function (t) {
     logLevel: logLevel
   }, function (err, indexer) {
     t.error(err)
-    getReadStream().pipe(JSONStream.parse())
+    getReadStream()
+      .pipe(JSONStream.parse())
       .pipe(indexer.defaultPipeline())
       // .on('data', function(data) {
-      //   console.log(JSON.parse(data, null, 2))
+      //   console.log(data)
       // })
       .pipe(indexer.add())
       .on('data', function (data) {

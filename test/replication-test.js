@@ -3,6 +3,7 @@ const SearchIndexAdder = require('../')
 const SearchIndexSearcher = require('search-index-searcher')
 const fs = require('fs')
 const sandbox = process.env.SANDBOX || 'test/sandbox'
+const sw = require('stopword').en
 const test = require('tape')
 
 const indexAddress = sandbox + '/replicate-test'
@@ -18,7 +19,9 @@ test('make a small search index', function (t) {
     const filePath = './node_modules/reuters-21578-json/data/fullFileStream/justTen.str'
     fs.createReadStream(filePath)
       .pipe(JSONStream.parse())
-      .pipe(si.defaultPipeline())
+      .pipe(si.defaultPipeline({
+        stopwords: sw
+      }))
       .pipe(si.add())
       .on('data', function (data) {
         t.ok(true, ' data recieved')
@@ -48,7 +51,7 @@ test('simple read from replicator (no ops)', function (t) {
       i++
     })
     .on('end', function () {
-      t.equal(i, 3085)
+      t.equal(i, 3101)
     })
 })
 
@@ -90,7 +93,7 @@ test('simple read from replicated index (no ops)', function (t) {
       i++
     })
     .on('end', function () {
-      t.equal(i, 3085)
+      t.equal(i, 3101)
     })
 })
 
@@ -135,7 +138,7 @@ test('validate gzip replication', function (t) {
       i++
     })
     .on('end', function () {
-      t.equal(i, 3085)
+      t.equal(i, 3101)
     })
 })
 
