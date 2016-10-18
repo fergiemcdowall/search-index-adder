@@ -1,4 +1,3 @@
-const JSONStream = require('JSONStream')
 const Readable = require('stream').Readable
 const SearchIndexAdder = require('../')
 const SearchIndexSearcher = require('search-index-searcher')
@@ -36,10 +35,10 @@ const data = [
 ]
 
 test('make the search index, removing the pipeline stage that bumps text to lower case', function (t) {
-  t.plan(7)
-  const s = new Readable()
+  t.plan(2)
+  const s = new Readable({ objectMode: true })
   data.forEach(function (stone) {
-    s.push(JSON.stringify(stone))
+    s.push(stone)
   })
   s.push(null)
 
@@ -56,19 +55,18 @@ test('make the search index, removing the pipeline stage that bumps text to lowe
     }
   }, function (err, si) {
     t.error(err)
-    s.pipe(JSONStream.parse())
-      .pipe(pumpify.obj(
-        // the LowerCase stage is removed
-        new docProc.IngestDoc(si.options),
-        new docProc.CreateStoredDocument(si.options),
-        new docProc.NormaliseFields(si.options),
-        new docProc.Tokeniser(si.options),
-        new docProc.RemoveStopWords(si.options),
-        new docProc.CalculateTermFrequency(si.options),
-        new docProc.CreateCompositeVector(si.options),
-        new docProc.CreateSortVectors(si.options),
-        new docProc.FieldedSearch(si.options)
-      ))
+    s.pipe(pumpify.obj(
+      // the LowerCase stage is removed
+      new docProc.IngestDoc(si.options),
+      new docProc.CreateStoredDocument(si.options),
+      new docProc.NormaliseFields(si.options),
+      new docProc.Tokeniser(si.options),
+      new docProc.RemoveStopWords(si.options),
+      new docProc.CalculateTermFrequency(si.options),
+      new docProc.CreateCompositeVector(si.options),
+      new docProc.CreateSortVectors(si.options),
+      new docProc.FieldedSearch(si.options)
+    ))
       .pipe(si.add())
       .on('data', function (data) {
         t.ok(true, ' data recieved')

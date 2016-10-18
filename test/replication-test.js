@@ -11,7 +11,7 @@ const indexAddress = sandbox + '/replicate-test'
 var replicator, replicatorTarget, replicatorTarget2
 
 test('make a small search index', function (t) {
-  t.plan(14)
+  t.plan(3)
   SearchIndexAdder({
     indexPath: indexAddress
   }, function (err, si) {
@@ -24,7 +24,7 @@ test('make a small search index', function (t) {
       }))
       .pipe(si.add())
       .on('data', function (data) {
-        t.ok(true, ' data recieved')
+        // t.ok(true, ' data recieved')
       })
       .on('end', function () {
         t.ok(true, ' stream ended')

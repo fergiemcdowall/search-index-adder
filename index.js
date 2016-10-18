@@ -19,7 +19,11 @@ module.exports = function (givenOptions, callback) {
 
     Indexer.add = function (batchOptions) {
       batchOptions = Object.assign({}, options, batchOptions)
-      return new IndexBatch(batchOptions, Indexer)
+      // return new IndexBatch(batchOptions, Indexer)
+      return pumpify.obj(
+        new IndexBatch(batchOptions, Indexer),
+        new DBWriteMergeStream(options)
+      )
     }
 
     Indexer.close = function (callback) {
@@ -48,10 +52,18 @@ module.exports = function (givenOptions, callback) {
       return docProc.pipeline(batchOptions)
     }
 
-    Indexer.deleteBatch = function (deleteBatch, APICallback) {
+    Indexer.deleteBatch = function (deleteBatch, done) {
       deleter.tryDeleteDoc(options, deleteBatch, function (err) {
-        return APICallback(err)
+        return done(err)
       })
+    }
+
+    Indexer.deleteStream = function (options) {
+      return pumpify.obj(
+        new DocVector(options),
+        new DBEntries(options),
+        new RecalibrateDB(options)
+      )
     }
 
     Indexer.deleter = function (docIds) {
@@ -60,9 +72,7 @@ module.exports = function (givenOptions, callback) {
         s.push(JSON.stringify(docId))
       })
       s.push(null)
-      return s.pipe(new DocVector(options))
-        .pipe(new DBEntries(options))
-        .pipe(new RecalibrateDB(options))
+      return s.pipe(Indexer.deleteStream(options))
     }
 
     Indexer.flush = function (APICallback) {

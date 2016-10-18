@@ -31,7 +31,7 @@ test('test stream file', function (t) {
 })
 
 test('stream file to search-index', { timeout: 6000000 }, function (t) {
-  t.plan(12)
+  t.plan(1)
   const filePath = './node_modules/reuters-21578-json/data/fullFileStream/justTen.str'
   // const filePath = './data.json'
   fs.createReadStream(filePath)
@@ -39,7 +39,7 @@ test('stream file to search-index', { timeout: 6000000 }, function (t) {
     .pipe(indexer.defaultPipeline())
     .pipe(indexer.add())
     .on('data', function (data) {
-      t.ok(true)
+      // nowt
     })
     .on('end', function () {
       console.log('test completed')

@@ -1,9 +1,9 @@
+var JSONStream = require('JSONStream')
+var Readable = require('stream').Readable
 var SearchIndexAdder = require('../')
 var SearchIndexSearcher = require('search-index-searcher')
-var test = require('tape')
-var Readable = require('stream').Readable
-var JSONStream = require('JSONStream')
 var fs = require('fs')
+var test = require('tape')
 
 var resultsForStarUSA = [
   '998',
@@ -19,7 +19,7 @@ var resultsForStarUSA = [
 ]
 
 test('set seperator at field level', function (t) {
-  t.plan(6)
+  t.plan(3)
   var batch = [{
     id: '1',
     title: 'thisxisxaxtitle',
@@ -29,17 +29,16 @@ test('set seperator at field level', function (t) {
     title: 'this is a title',
     body: 'horse zebra elephant'
   }]
-  const s = new Readable()
+  const s = new Readable({ objectMode: true })
   batch.forEach(function (elem) {
-    s.push(JSON.stringify(elem))
+    s.push(elem)
   })
   s.push(null)
   SearchIndexAdder({
     indexPath: 'test/sandbox/separatorTest'
   }, function (err, indexer) {
     t.error(err)
-    s.pipe(JSONStream.parse())
-      .pipe(indexer.defaultPipeline())
+    s.pipe(indexer.defaultPipeline())
       .pipe(indexer.add())
       .on('data', function (data) {
         t.ok(true, ' data recieved')
@@ -65,7 +64,7 @@ test('set seperator at field level', function (t) {
 })
 
 test('simple indexing test', function (t) {
-  t.plan(1004)
+  t.plan(3)
   SearchIndexAdder({
     indexPath: 'test/sandbox/simpleIndexing'
   }, function (err, indexer) {
@@ -107,11 +106,9 @@ test('preserve array fields in stored document', function (t) {
     t.error(err)
     SearchIndexSearcher(indexer.options, function (err, searcher) {
       t.error(err)
-
       const s = new Readable()
       s.push(JSON.stringify({'id': '1', 'anArray': ['one', 'two', 'three']}))
       s.push(null)
-
       s.pipe(JSONStream.parse())
         .pipe(indexer.defaultPipeline())
         .pipe(indexer.add())

@@ -1,4 +1,3 @@
-const JSONStream = require('JSONStream')
 const Readable = require('stream').Readable
 const SearchIndexAdder = require('../')
 const SearchIndexSearcher = require('search-index-searcher')
@@ -79,16 +78,16 @@ const getReadStream = function () {
       age: '33342'
     }
   ]
-  const s = new Readable()
+  const s = new Readable({ objectMode: true })
   batch.forEach(function (item) {
-    s.push(JSON.stringify(item))
+    s.push(item)
   })
   s.push(null)
   return s
 }
 
 test('initialize a search index with no fielded search', function (t) {
-  t.plan(13)
+  t.plan(2)
   SearchIndexAdder({
     fieldedSearch: false,
     indexPath: sandbox + '/si-no-fielded-search',
@@ -96,14 +95,10 @@ test('initialize a search index with no fielded search', function (t) {
   }, function (err, indexer) {
     t.error(err)
     getReadStream()
-      .pipe(JSONStream.parse())
       .pipe(indexer.defaultPipeline())
-      // .on('data', function(data) {
-      //   console.log(data)
-      // })
       .pipe(indexer.add())
       .on('data', function (data) {
-        t.ok(true, ' data recieved')
+        // nowt
       })
       .on('end', function () {
         indexer.close(function (err) {
@@ -180,14 +175,14 @@ test('cant do a fielded search', function (t) {
 })
 
 test('initialize a search index WITH fielded search', function (t) {
-  t.plan(13)
+  t.plan(2)
   SearchIndexAdder({
     fieldedSearch: true,
     indexPath: sandbox + '/si-fielded-search-on',
     logLevel: logLevel
   }, function (err, indexer) {
     t.error(err)
-    getReadStream().pipe(JSONStream.parse())
+    getReadStream()
       .pipe(indexer.defaultPipeline())
       .pipe(indexer.add())
       .on('data', function (data) {
@@ -253,14 +248,14 @@ test('CAN do a fielded search', function (t) {
 })
 
 test('initialize a search index WITH fielded search on specified fields', function (t) {
-  t.plan(13)
+  t.plan(2)
   SearchIndexAdder({
     fieldedSearch: false,
     indexPath: sandbox + '/si-fielded-search-specified-fields',
     logLevel: logLevel
   }, function (err, indexer) {
     t.error(err)
-    getReadStream().pipe(JSONStream.parse())
+    getReadStream()
       .pipe(indexer.defaultPipeline({
         fieldOptions: {
           description: {
@@ -356,14 +351,14 @@ test('CAN find stuff from name field in wildcard', function (t) {
 })
 
 test('initialize a search index WITH only name field searchable', function (t) {
-  t.plan(13)
+  t.plan(2)
   SearchIndexAdder({
     searchable: false,
     indexPath: sandbox + '/si-searchable-specified-fields',
     logLevel: logLevel
   }, function (err, indexer) {
     t.error(err)
-    getReadStream().pipe(JSONStream.parse())
+    getReadStream()
       .pipe(indexer.defaultPipeline({
         fieldOptions: {
           name: {

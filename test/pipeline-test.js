@@ -36,7 +36,7 @@ test('test stream file', function (t) {
 })
 
 test('transform stream file', { timeout: 6000000 }, function (t) {
-  t.plan(11)
+  t.plan(1)
   const filePath = './test/data.json'
   fs.createReadStream(filePath)
     .pipe(JSONStream.parse())
@@ -56,9 +56,9 @@ test('transform stream file', { timeout: 6000000 }, function (t) {
     }))
     .pipe(indexer.add())
     .on('data', function (data) {
-      t.ok(true)
+      // nowt
     })
-    .on('close', function () {
+    .on('end', function () {
       t.ok(true)
     })
 })

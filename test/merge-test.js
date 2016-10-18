@@ -1,4 +1,3 @@
-const JSONStream = require('JSONStream')
 const SearchIndexSearcher = require('search-index-searcher')
 const SearchIndexAdder = require('../')
 const s = require('stream')
@@ -58,26 +57,25 @@ const beatles = [
   }
 ]
 
-const beatlesStream = new s.Readable()
+const beatlesStream = new s.Readable({ objectMode: true })
 beatles.forEach(function (beatle) {
-  beatlesStream.push(JSON.stringify(beatle))
+  beatlesStream.push(beatle)
 })
 beatlesStream.push(null)
 
-const stonesStream = new s.Readable()
+const stonesStream = new s.Readable({ objectMode: true })
 stones.forEach(function (stone) {
-  stonesStream.push(JSON.stringify(stone))
+  stonesStream.push(stone)
 })
 stonesStream.push(null)
 
 test('make the beatles search index', function (t) {
-  t.plan(7)
+  t.plan(2)
   SearchIndexAdder({
     indexPath: 'test/sandbox/beatles'
   }, function (err, si) {
     t.error(err)
     beatlesStream
-      .pipe(JSONStream.parse())
       .pipe(si.defaultPipeline())
       .pipe(si.add())
       .on('data', function (data) {
@@ -92,13 +90,12 @@ test('make the beatles search index', function (t) {
 })
 
 test('make the stones search index', function (t) {
-  t.plan(7)
+  t.plan(2)
   SearchIndexAdder({
     indexPath: 'test/sandbox/stones'
   }, function (err, si) {
     t.error(err)
     stonesStream
-      .pipe(JSONStream.parse())
       .pipe(si.defaultPipeline())
       .pipe(si.add())
       .on('data', function (data) {
