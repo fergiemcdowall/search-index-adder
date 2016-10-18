@@ -19,10 +19,11 @@ module.exports = function (givenOptions, callback) {
 
     Indexer.add = function (batchOptions) {
       batchOptions = Object.assign({}, options, batchOptions)
+      console.log(batchOptions.batchSize)
       // return new IndexBatch(batchOptions, Indexer)
       return pumpify.obj(
         new IndexBatch(batchOptions, Indexer),
-        new DBWriteMergeStream(options)
+        new DBWriteMergeStream(batchOptions)
       )
     }
 
@@ -89,7 +90,7 @@ module.exports = function (givenOptions, callback) {
 const getOptions = function (options, done) {
   options = Object.assign({}, {
     deletable: true,
-    batchSize: 1000,
+    batchSize: 100000,
     fieldedSearch: true,
     fieldOptions: {},
     preserveCase: false,
