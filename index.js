@@ -5,7 +5,6 @@ const DocVector = require('./lib/delete.js').DocVector
 const IndexBatch = require('./lib/add.js').IndexBatch
 const Readable = require('stream').Readable
 const RecalibrateDB = require('./lib/delete.js').RecalibrateDB
-const _defaults = require('lodash.defaults')
 const bunyan = require('bunyan')
 const deleter = require('./lib/delete.js')
 const docProc = require('docproc')
@@ -19,9 +18,7 @@ module.exports = function (givenOptions, callback) {
     Indexer.options = options
 
     Indexer.add = function (batchOptions) {
-      batchOptions = _defaults(batchOptions || {}, options)
-      // this should probably not be instantiated on every call in
-      // order to better deal with concurrent adds
+      batchOptions = Object.assign({}, options, batchOptions)
       return new IndexBatch(batchOptions, Indexer)
     }
 
@@ -38,8 +35,8 @@ module.exports = function (givenOptions, callback) {
     }
 
     Indexer.dbWriteStream = function (streamOps) {
-      streamOps = _defaults(streamOps || {}, { merge: true })
-      if (streamOps.merge === true) {
+      streamOps = Object.assign({}, { merge: true }, streamOps)
+      if (streamOps.merge) {
         return new DBWriteMergeStream(options)
       } else {
         return new DBWriteCleanStream(options)
@@ -47,7 +44,7 @@ module.exports = function (givenOptions, callback) {
     }
 
     Indexer.defaultPipeline = function (batchOptions) {
-      batchOptions = _defaults(batchOptions || {}, options)
+      batchOptions = Object.assign({}, options, batchOptions)
       return docProc.pipeline(batchOptions)
     }
 
@@ -80,7 +77,7 @@ module.exports = function (givenOptions, callback) {
 }
 
 const getOptions = function (options, done) {
-  options = _defaults(options, {
+  options = Object.assign({}, {
     deletable: true,
     batchSize: 1000,
     fieldedSearch: true,
@@ -95,7 +92,7 @@ const getOptions = function (options, done) {
     separator: /\\n|[\|' ><\.,\-|]+|\\u0003/,
     stopwords: [],
     weight: 0
-  })
+  }, options)
   options.log = bunyan.createLogger({
     name: 'search-index',
     level: options.logLevel
