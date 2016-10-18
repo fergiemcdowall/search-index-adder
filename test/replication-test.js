@@ -64,7 +64,7 @@ test('initialise replication target', function (t) {
 })
 
 test('simple replication from one index to another', function (t) {
-  t.plan(5)
+  t.plan(2)
   replicator.dbReadStream()
     .pipe(replicatorTarget.dbWriteStream({ merge: false }))
     .on('data', function (data) {

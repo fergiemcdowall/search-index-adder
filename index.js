@@ -19,8 +19,6 @@ module.exports = function (givenOptions, callback) {
 
     Indexer.add = function (batchOptions) {
       batchOptions = Object.assign({}, options, batchOptions)
-      console.log(batchOptions.batchSize)
-      // return new IndexBatch(batchOptions, Indexer)
       return pumpify.obj(
         new IndexBatch(batchOptions, Indexer),
         new DBWriteMergeStream(batchOptions)
