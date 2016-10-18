@@ -52,12 +52,6 @@ module.exports = function (givenOptions, callback) {
       return docProc.pipeline(batchOptions)
     }
 
-    Indexer.deleteBatch = function (deleteBatch, done) {
-      deleter.tryDeleteDoc(options, deleteBatch, function (err) {
-        return done(err)
-      })
-    }
-
     Indexer.deleteStream = function (options) {
       return pumpify.obj(
         new DocVector(options),
@@ -66,13 +60,19 @@ module.exports = function (givenOptions, callback) {
       )
     }
 
-    Indexer.deleter = function (docIds) {
+    Indexer.deleter = function (docIds, done) {
       const s = new Readable()
       docIds.forEach(function (docId) {
         s.push(JSON.stringify(docId))
       })
       s.push(null)
-      return s.pipe(Indexer.deleteStream(options))
+      s.pipe(Indexer.deleteStream(options))
+        .on('data', function () {
+          // nowt
+        })
+        .on('end', function () {
+          done(null)
+        })
     }
 
     Indexer.flush = function (APICallback) {

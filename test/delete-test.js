@@ -65,20 +65,17 @@ test('confirm can search as normal', function (t) {
 })
 
 test('can delete', function (t) {
-  t.plan(2)
+  t.plan(3)
   SearchIndexAdder({
     indexPath: 'test/sandbox/deleteTest'
   }, function (err, si) {
     t.error(err)
-    si.deleter(['one'])
-      .on('data', function (data) {
-        console.log(data)
+    si.deleter(['one'], function (err) {
+      t.error(err)
+      si.close(function (err) {
+        t.error(err)
       })
-      .on('end', function () {
-        si.close(function (err) {
-          t.error(err)
-        })
-      })
+    })
   })
 })
 
