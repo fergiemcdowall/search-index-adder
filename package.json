@@ -29,7 +29,7 @@
   },
   "dependencies": {
     "bunyan": "^1.8.1",
-    "docproc": "^0.0.6",
+    "docproc": "^0.0.7",
     "leveldown": "^1.5.0",
     "levelup": "^1.3.3",
     "pumpify": "^1.3.5"
@@ -39,7 +39,7 @@
     "browserify": "^13.1.0",
     "level-js": "^2.2.4",
     "reuters-21578-json": "^0.0.8",
-    "search-index-searcher": "^0.1.13",
+    "search-index-searcher": "https://github.com/fergiemcdowall/search-index-searcher",
     "standard": "^8.4.0",
     "stopword": "^0.1.1",
     "tape": "^4.6.2"
