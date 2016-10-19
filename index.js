@@ -1,3 +1,11 @@
+/*
+search-index-adder
+
+The module that adds documents into search-index' can also be run as a
+standalone
+
+*/
+
 const DBEntries = require('./lib/delete.js').DBEntries
 const DBWriteCleanStream = require('./lib/replicate.js').DBWriteCleanStream
 const DBWriteMergeStream = require('./lib/replicate.js').DBWriteMergeStream
@@ -92,6 +100,7 @@ const getOptions = function (options, done) {
     fieldedSearch: true,
     fieldOptions: {},
     preserveCase: false,
+    keySeparator: '￮',
     storeable: true,
     searchable: true,
     indexPath: 'si',
