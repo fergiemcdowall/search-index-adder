@@ -14,7 +14,7 @@ const IndexBatch = require('./lib/add.js').IndexBatch
 const Readable = require('stream').Readable
 const RecalibrateDB = require('./lib/delete.js').RecalibrateDB
 const bunyan = require('bunyan')
-const deleter = require('./lib/delete.js')
+const del = require('./lib/delete.js')
 const docProc = require('docproc')
 const leveldown = require('leveldown')
 const levelup = require('levelup')
@@ -31,6 +31,23 @@ module.exports = function (givenOptions, callback) {
         new IndexBatch(batchOptions, Indexer),
         new DBWriteMergeStream(batchOptions)
       )
+    }
+
+    Indexer.callbackyAdd = function (batchOps, batch, done) {
+      const s = new Readable({ objectMode: true })
+      batch.forEach(function (doc) {
+        s.push(doc)
+      })
+      s.push(null)
+      s.pipe(Indexer.defaultPipeline())
+        .pipe(Indexer.add())
+        .on('data', function (data) {})
+        .on('end', function () {
+          return done()
+        })
+        .on('error', function (err) {
+          return done(err)
+        })
     }
 
     Indexer.close = function (callback) {
@@ -83,7 +100,7 @@ module.exports = function (givenOptions, callback) {
     }
 
     Indexer.flush = function (APICallback) {
-      deleter.flush(options, function (err) {
+      del.flush(options, function (err) {
         return APICallback(err)
       })
     }
