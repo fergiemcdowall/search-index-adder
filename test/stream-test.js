@@ -66,7 +66,7 @@ test('index should be searchable', function (t) {
         AND: {'*': ['*']}
       }]
     }).on('data', function (data) {
-      t.ok(JSON.parse(data).document.id === results.shift())
+      t.ok(data.document.id === results.shift())
     })
   })
 })

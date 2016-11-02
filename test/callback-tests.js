@@ -46,7 +46,6 @@ test('confirm can search as normal using the streaming API', function (t) {
     si.search({
       AND: {'*': ['*']}
     }).on('data', function (data) {
-      data = JSON.parse(data)
       t.equals(data.document.id, results.shift())
     }).on('end', function () {
       si.close(function (err) {

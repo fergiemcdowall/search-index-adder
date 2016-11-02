@@ -119,7 +119,6 @@ test('confirm can search as normal in beatles', function (t) {
     si.search({
       AND: {'*': ['*']}
     }).on('data', function (data) {
-      data = JSON.parse(data)
       t.equals(data.document.name, results.shift())
     }).on('end', function () {
       si.close(function (err) {
@@ -139,7 +138,6 @@ test('confirm can search as normal in stones', function (t) {
     si.search({
       AND: [{'*': ['*']}]
     }).on('data', function (data) {
-      data = JSON.parse(data)
       t.equals(data.document.name, results.shift())
     }).on('end', function () {
       si.close(function (err) {
@@ -184,7 +182,6 @@ test('supergroup contains beatles', function (t) {
     si.search({
       AND: [{'*': ['*']}]
     }).on('data', function (data) {
-      data = JSON.parse(data)
       t.equals(data.document.name, results.shift())
     }).on('end', function () {
       si.close(function (err) {
@@ -233,7 +230,6 @@ test('open supergroup index', function (t) {
         AND: {'*': ['*']}
       }]
     }).on('data', function (data) {
-      data = JSON.parse(data)
       t.equals(data.document.name, results.shift())
     })
   })

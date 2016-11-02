@@ -150,7 +150,6 @@ test('confirm can search as normal in replicated index', function (t) {
       AND: {'*': ['*']}
     }]
   }).on('data', function (data) {
-    data = JSON.parse(data)
     t.ok(results.shift() === data.document.id)
   })
 })

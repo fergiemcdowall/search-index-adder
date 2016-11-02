@@ -118,7 +118,7 @@ test('search in a search index with no fielded search', function (t) {
     t.error(err)
     searcher.search('moon calendar')
       .on('data', function (data) {
-        t.ok(JSON.parse(data).document.id === '10')
+        t.ok(data.document.id === '10')
         t.equals(++counter, 1)
       }).on('end', function () {
         searcher.close(function (err) {
@@ -140,7 +140,7 @@ test('search in a search index with no fielded search', function (t) {
     searcher.search('swiss timepiece')
       .on('data', function (data) {
         counter++
-        t.equals(JSON.parse(data).document.id, results.shift())
+        t.equals(data.document.id, results.shift())
       }).on('end', function () {
         t.equals(counter, 2)
         searcher.close(function (err) {
@@ -210,7 +210,7 @@ test('CAN do a fielded search', function (t) {
       }
     })
       .on('data', function (data) {
-        t.equals(JSON.parse(data).document.id, '3')
+        t.equals(data.document.id, '3')
         counter++
       }).on('end', function () {
         t.equals(counter, 1)
@@ -236,7 +236,7 @@ test('CAN do a fielded search', function (t) {
       }
     })
       .on('data', function (data) {
-        t.equals(JSON.parse(data).document.id, results.shift())
+        t.equals(data.document.id, results.shift())
         counter++
       }).on('end', function () {
         t.equals(counter, 3)
@@ -290,7 +290,7 @@ test('CAN do a fielded search on "description" field', function (t) {
       }
     })
       .on('data', function (data) {
-        t.equals(JSON.parse(data).document.id, results.shift())
+        t.equals(data.document.id, results.shift())
         counter++
       }).on('end', function () {
         t.equals(counter, 3)
@@ -339,7 +339,7 @@ test('CAN find stuff from name field in wildcard', function (t) {
       }
     })
       .on('data', function (data) {
-        t.equals(JSON.parse(data).document.id, '3')
+        t.equals(data.document.id, '3')
         counter++
       }).on('end', function () {
         t.equals(counter, 1)
@@ -392,7 +392,7 @@ test('CAN find stuff from name field in wildcard', function (t) {
       }
     })
       .on('data', function (data) {
-        t.looseEquals(JSON.parse(data).document, {
+        t.looseEquals(data.document, {
           age: '8293',
           description: 'Versace Men\'s Swiss Chronograph Mystique Sport Two-Tone Ion-Plated Stainless Steel Bracelet Watch',
           id: '3',

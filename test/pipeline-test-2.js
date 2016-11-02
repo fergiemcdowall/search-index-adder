@@ -90,7 +90,6 @@ test('confirm can search with document deleted', function (t) {
         AND: {'*': ['DoC']}
       }
     }).on('data', function (data) {
-      data = JSON.parse(data)
       t.equals(data.document.id, 'three')
     }).on('end', function () {
       si.close(function (err) {

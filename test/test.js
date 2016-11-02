@@ -54,8 +54,7 @@ test('set seperator at field level', function (t) {
             }]
             searcher.search(q)
               .on('data', function (data) {
-                console.log(JSON.parse(data).document.id)
-                t.ok(JSON.parse(data).document.id === '1')
+                t.ok(data.document.id === '1')
               })
           })
         })
@@ -88,7 +87,6 @@ test('simple indexing test', function (t) {
             q.pageSize = 10
             var i = 0
             searcher.search(q).on('data', function (data) {
-              data = JSON.parse(data)
               console.log(data.document.id)
               t.equals(resultsForStarUSA[i++], data.document.id)
             })
@@ -106,11 +104,10 @@ test('preserve array fields in stored document', function (t) {
     t.error(err)
     SearchIndexSearcher(indexer.options, function (err, searcher) {
       t.error(err)
-      const s = new Readable()
-      s.push(JSON.stringify({'id': '1', 'anArray': ['one', 'two', 'three']}))
+      const s = new Readable({ objectMode: true })
+      s.push({'id': '1', 'anArray': ['one', 'two', 'three']})
       s.push(null)
-      s.pipe(JSONStream.parse())
-        .pipe(indexer.defaultPipeline())
+      s.pipe(indexer.defaultPipeline())
         .pipe(indexer.add())
         .on('data', function (data) {})
         .on('end', function () {
@@ -120,7 +117,6 @@ test('preserve array fields in stored document', function (t) {
           }
           searcher.search(q)
             .on('data', function (data) {
-              data = JSON.parse(data)
               t.equals(data.document.id, '1')
               t.looseEquals(data.document.anArray, ['one', 'two', 'three'])
             })

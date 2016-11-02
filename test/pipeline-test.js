@@ -86,7 +86,6 @@ test('can search', function (t) {
         ]
       }
     ).on('data', function (data) {
-      data = JSON.parse(data)
       t.ok(data.document.id, results.shift())
     }).on('end', function () {
       si.close(function (err) {
@@ -112,7 +111,6 @@ test('can search', function (t) {
         ]
       }
     ).on('data', function (data) {
-      data = JSON.parse(data)
       t.equal(data.document.id, results.shift())
     }).on('end', function () {
       si.close(function (err) {
@@ -138,7 +136,6 @@ test('can search', function (t) {
         ]
       }
     ).on('data', function (data) {
-      data = JSON.parse(data)
       t.equal(data.document.id, results.shift())
     }).on('end', function () {
       si.close(function (err) {
@@ -164,7 +161,6 @@ test('can search for id', function (t) {
         ]
       }
     ).on('data', function (data) {
-      data = JSON.parse(data)
       t.equal(data.document.id, results.shift())
     }).on('end', function () {
       si.close(function (err) {
