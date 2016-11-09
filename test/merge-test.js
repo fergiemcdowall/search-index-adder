@@ -70,17 +70,22 @@ stones.forEach(function (stone) {
 stonesStream.push(null)
 
 test('make the beatles search index', function (t) {
-  t.plan(2)
+  t.plan(10)
+  var beatlesIDs = [ '2', '4', '6', '8' ]
   SearchIndexAdder({
     indexPath: 'test/sandbox/beatles'
   }, function (err, si) {
     t.error(err)
     beatlesStream
       .pipe(si.defaultPipeline())
-      .pipe(si.add())
       .on('data', function (data) {
-        t.ok(true, ' data recieved')
+        t.looseEqual(
+          Object.keys(data),
+          [ 'normalised', 'raw', 'stored', 'tokenised', 'vector', 'id' ])
+        t.equal(data.id, beatlesIDs.shift())
       })
+      .pipe(si.add())
+      .on('data', function (d) {})
       .on('end', function () {
         si.close(function (err) {
           t.error(err)
@@ -90,17 +95,22 @@ test('make the beatles search index', function (t) {
 })
 
 test('make the stones search index', function (t) {
-  t.plan(2)
+  t.plan(10)
+  var stonesIDs = [ '1', '3', '5', '7' ]
   SearchIndexAdder({
     indexPath: 'test/sandbox/stones'
   }, function (err, si) {
     t.error(err)
     stonesStream
       .pipe(si.defaultPipeline())
-      .pipe(si.add())
       .on('data', function (data) {
-        t.ok(true, ' data recieved')
+        t.looseEqual(
+          Object.keys(data),
+          [ 'normalised', 'raw', 'stored', 'tokenised', 'vector', 'id' ])
+        t.equal(data.id, stonesIDs.shift())
       })
+      .pipe(si.add())
+      .on('data', function (data) {})
       .on('end', function () {
         si.close(function (err) {
           t.error(err)
@@ -218,8 +228,6 @@ test('gzipped replication of stones to supergroup', function (t) {
 
 test('open supergroup index', function (t) {
   t.plan(9)
-  // var results = [ 'Ronnie', 'Charlie', 'Kieth', 'Mick' ]
-  // var results = [ 'Ringo', 'George', 'Paul', 'John' ]
   var results = [ 'Ringo', 'Ronnie', 'George', 'Charlie', 'Paul', 'Kieth', 'John', 'Mick' ]
   SearchIndexSearcher({
     indexPath: 'test/sandbox/supergroup'

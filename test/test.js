@@ -19,7 +19,7 @@ var resultsForStarUSA = [
 ]
 
 test('set seperator at field level', function (t) {
-  t.plan(3)
+  t.plan(5)
   var batch = [{
     id: '1',
     title: 'thisxisxaxtitle',
@@ -39,10 +39,13 @@ test('set seperator at field level', function (t) {
   }, function (err, indexer) {
     t.error(err)
     s.pipe(indexer.defaultPipeline())
-      .pipe(indexer.add())
       .on('data', function (data) {
-        t.ok(true, ' data recieved')
+        t.looseEqual(
+          Object.keys(data),
+          [ 'normalised', 'raw', 'stored', 'tokenised', 'vector', 'id' ])
       })
+      .pipe(indexer.add())
+      .on('data', function (data) {})
       .on('end', function () {
         indexer.close(function (err) {
           t.error(err)
@@ -63,21 +66,29 @@ test('set seperator at field level', function (t) {
 })
 
 test('simple indexing test', function (t) {
-  t.plan(3)
+  t.plan(5)
+  var j = 0
+  var k = 0
   SearchIndexAdder({
     indexPath: 'test/sandbox/simpleIndexing'
   }, function (err, indexer) {
     t.error(err)
     fs.createReadStream('./node_modules/reuters-21578-json/data/fullFileStream/000.str')
       .pipe(JSONStream.parse())
-      .pipe(indexer.defaultPipeline())
-      .pipe(indexer.add())
       .on('data', function (data) {
-        t.ok(true, ' data recieved')
+        j++
       })
+      .pipe(indexer.defaultPipeline())
+      .on('data', function (data) {
+        k++
+      })
+      .pipe(indexer.add())
+      .on('data', function (data) {})
       .on('end', function () {
         indexer.close(function (err) {
           t.error(err)
+          t.equals(j, 1000)
+          t.equals(k, 1000)
           SearchIndexSearcher(indexer.options, function (err, searcher) {
             t.error(err)
             var q = {}

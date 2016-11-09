@@ -175,7 +175,7 @@ test('cant do a fielded search', function (t) {
 })
 
 test('initialize a search index WITH fielded search', function (t) {
-  t.plan(2)
+  t.plan(12)
   SearchIndexAdder({
     fieldedSearch: true,
     indexPath: sandbox + '/si-fielded-search-on',
@@ -184,10 +184,13 @@ test('initialize a search index WITH fielded search', function (t) {
     t.error(err)
     getReadStream()
       .pipe(indexer.defaultPipeline())
-      .pipe(indexer.add())
       .on('data', function (data) {
-        t.ok(true, ' data recieved')
+        t.looseEqual(
+          Object.keys(data),
+          [ 'normalised', 'raw', 'stored', 'tokenised', 'vector', 'id' ])
       })
+      .pipe(indexer.add())
+      .on('data', function (data) {})
       .on('end', function () {
         indexer.close(function (err) {
           t.error(err)
@@ -248,7 +251,7 @@ test('CAN do a fielded search', function (t) {
 })
 
 test('initialize a search index WITH fielded search on specified fields', function (t) {
-  t.plan(2)
+  t.plan(12)
   SearchIndexAdder({
     fieldedSearch: false,
     indexPath: sandbox + '/si-fielded-search-specified-fields',
@@ -263,10 +266,13 @@ test('initialize a search index WITH fielded search on specified fields', functi
           }
         }
       }))
-      .pipe(indexer.add())
       .on('data', function (data) {
-        t.ok(true, ' data recieved')
+        t.looseEqual(
+          Object.keys(data),
+          [ 'normalised', 'raw', 'stored', 'tokenised', 'vector', 'id' ])
       })
+      .pipe(indexer.add())
+      .on('data', function (data) {})
       .on('end', function () {
         indexer.close(function (err) {
           t.error(err)
@@ -351,7 +357,7 @@ test('CAN find stuff from name field in wildcard', function (t) {
 })
 
 test('initialize a search index WITH only name field searchable', function (t) {
-  t.plan(2)
+  t.plan(12)
   SearchIndexAdder({
     searchable: false,
     indexPath: sandbox + '/si-searchable-specified-fields',
@@ -366,10 +372,13 @@ test('initialize a search index WITH only name field searchable', function (t) {
           }
         }
       }))
-      .pipe(indexer.add())
       .on('data', function (data) {
-        t.ok(true, ' data recieved')
+        t.looseEqual(
+          Object.keys(data),
+          [ 'normalised', 'raw', 'stored', 'tokenised', 'vector', 'id' ])
       })
+      .pipe(indexer.add())
+      .on('data', function (data) {})
       .on('end', function () {
         indexer.close(function (err) {
           t.error(err)

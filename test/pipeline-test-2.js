@@ -35,7 +35,7 @@ const data = [
 ]
 
 test('make the search index, removing the pipeline stage that bumps text to lower case', function (t) {
-  t.plan(2)
+  t.plan(6)
   const s = new Readable({ objectMode: true })
   data.forEach(function (stone) {
     s.push(stone)
@@ -66,11 +66,13 @@ test('make the search index, removing the pipeline stage that bumps text to lowe
       new docProc.CreateCompositeVector(si.options),
       new docProc.CreateSortVectors(si.options),
       new docProc.FieldedSearch(si.options)
-    ))
+    )).on('data', function (data) {
+      t.looseEqual(
+          Object.keys(data),
+          [ 'normalised', 'raw', 'stored', 'tokenised', 'vector', 'id' ])
+    })
       .pipe(si.add())
-      .on('data', function (data) {
-        t.ok(true, ' data recieved')
-      })
+      .on('data', function () {})
       .on('end', function () {
         si.close(function (err) {
           t.error(err)
