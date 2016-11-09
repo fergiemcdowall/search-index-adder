@@ -1,6 +1,6 @@
 {
   "name": "search-index-adder",
-  "version": "0.1.20",
+  "version": "0.1.21",
   "description": "The indexing module for search-index",
   "main": "index.js",
   "scripts": {
