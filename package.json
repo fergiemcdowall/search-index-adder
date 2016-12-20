@@ -1,6 +1,6 @@
 {
   "name": "search-index-adder",
-  "version": "0.1.23",
+  "version": "0.1.24",
   "description": "The indexing module for search-index",
   "main": "index.js",
   "scripts": {
@@ -29,6 +29,7 @@
     "leveldown": "level-js"
   },
   "dependencies": {
+    "async": "^2.1.4",
     "bunyan": "^1.8.1",
     "docproc": "^0.0.8",
     "leveldown": "^1.5.0",
