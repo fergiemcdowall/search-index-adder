@@ -20,34 +20,43 @@ const leveldown = require('leveldown')
 const levelup = require('levelup')
 const pumpify = require('pumpify')
 
+const async = require('async')
+
 module.exports = function (givenOptions, callback) {
   getOptions(givenOptions, function (err, options) {
     var Indexer = {}
     Indexer.options = options
 
-    var addStream = pumpify.obj(
-      new IndexBatch(Indexer),
-      new DBWriteMergeStream(options))
-
-    Indexer.add = function () {
-      return addStream
-    }
-
-    Indexer.callbackyAdd = function (batchOps, batch, done) {
+    var q = async.queue(function (batch, callback) {
       const s = new Readable({ objectMode: true })
-      batch.forEach(function (doc) {
+      batch.batch.forEach(function (doc) {
         s.push(doc)
       })
       s.push(null)
-      s.pipe(Indexer.defaultPipeline())
+      s.pipe(Indexer.defaultPipeline(batch.batchOps))
         .pipe(Indexer.add())
         .on('data', function (data) {})
         .on('end', function () {
-          return done()
+          return callback()
         })
         .on('error', function (err) {
-          return done(err)
+          return callback(err)
         })
+    }, 1)
+
+    Indexer.add = function () {
+      return pumpify.obj(
+        new IndexBatch(Indexer),
+        new DBWriteMergeStream(options))
+    }
+
+    Indexer.callbackyAdd = function (batchOps, batch, done) {
+      q.push({
+        batch: batch,
+        batchOps: batchOps
+      }, function (err) {
+        done(err)
+      })
     }
 
     Indexer.close = function (callback) {
