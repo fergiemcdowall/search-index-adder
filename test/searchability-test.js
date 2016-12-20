@@ -187,7 +187,7 @@ test('initialize a search index WITH fielded search', function (t) {
       .on('data', function (data) {
         t.looseEqual(
           Object.keys(data),
-          [ 'normalised', 'raw', 'stored', 'tokenised', 'vector', 'id' ])
+          [ 'normalised', 'options', 'raw', 'stored', 'tokenised', 'vector', 'id' ])
       })
       .pipe(indexer.add())
       .on('data', function (data) {})
@@ -269,7 +269,7 @@ test('initialize a search index WITH fielded search on specified fields', functi
       .on('data', function (data) {
         t.looseEqual(
           Object.keys(data),
-          [ 'normalised', 'raw', 'stored', 'tokenised', 'vector', 'id' ])
+          [ 'normalised', 'options', 'raw', 'stored', 'tokenised', 'vector', 'id' ])
       })
       .pipe(indexer.add())
       .on('data', function (data) {})
@@ -375,7 +375,7 @@ test('initialize a search index WITH only name field searchable', function (t) {
       .on('data', function (data) {
         t.looseEqual(
           Object.keys(data),
-          [ 'normalised', 'raw', 'stored', 'tokenised', 'vector', 'id' ])
+          [ 'normalised', 'options', 'raw', 'stored', 'tokenised', 'vector', 'id' ])
       })
       .pipe(indexer.add())
       .on('data', function (data) {})

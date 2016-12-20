@@ -81,7 +81,7 @@ test('make the beatles search index', function (t) {
       .on('data', function (data) {
         t.looseEqual(
           Object.keys(data),
-          [ 'normalised', 'raw', 'stored', 'tokenised', 'vector', 'id' ])
+          [ 'normalised', 'options', 'raw', 'stored', 'tokenised', 'vector', 'id' ])
         t.equal(data.id, beatlesIDs.shift())
       })
       .pipe(si.add())
@@ -106,7 +106,7 @@ test('make the stones search index', function (t) {
       .on('data', function (data) {
         t.looseEqual(
           Object.keys(data),
-          [ 'normalised', 'raw', 'stored', 'tokenised', 'vector', 'id' ])
+          [ 'normalised', 'options', 'raw', 'stored', 'tokenised', 'vector', 'id' ])
         t.equal(data.id, stonesIDs.shift())
       })
       .pipe(si.add())

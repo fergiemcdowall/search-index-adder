@@ -25,12 +25,12 @@ module.exports = function (givenOptions, callback) {
     var Indexer = {}
     Indexer.options = options
 
-    Indexer.add = function (batchOptions) {
-      batchOptions = Object.assign({}, options, batchOptions)
-      return pumpify.obj(
-        new IndexBatch(batchOptions, Indexer),
-        new DBWriteMergeStream(batchOptions)
-      )
+    var addStream = pumpify.obj(
+      new IndexBatch(Indexer),
+      new DBWriteMergeStream(options))
+
+    Indexer.add = function () {
+      return addStream
     }
 
     Indexer.callbackyAdd = function (batchOps, batch, done) {
@@ -124,7 +124,7 @@ const getOptions = function (options, done) {
     logLevel: 'error',
     nGramLength: 1,
     nGramSeparator: ' ',
-    separator: /\\n|[\|' ><\.,\-|]+|\\u0003/,
+    separator: /\\n|[|' ><.,\-|]+|\\u0003/,
     stopwords: [],
     weight: 0
   }, options)

@@ -42,7 +42,7 @@ test('set seperator at field level', function (t) {
       .on('data', function (data) {
         t.looseEqual(
           Object.keys(data),
-          [ 'normalised', 'raw', 'stored', 'tokenised', 'vector', 'id' ])
+          [ 'normalised', 'options', 'raw', 'stored', 'tokenised', 'vector', 'id' ])
       })
       .pipe(indexer.add())
       .on('data', function (data) {})

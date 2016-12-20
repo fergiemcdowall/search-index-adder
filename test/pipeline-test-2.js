@@ -69,7 +69,7 @@ test('make the search index, removing the pipeline stage that bumps text to lowe
     )).on('data', function (data) {
       t.looseEqual(
           Object.keys(data),
-          [ 'normalised', 'raw', 'stored', 'tokenised', 'vector', 'id' ])
+          [ 'normalised', 'options', 'raw', 'stored', 'tokenised', 'vector', 'id' ])
     })
       .pipe(si.add())
       .on('data', function () {})
