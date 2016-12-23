@@ -27,7 +27,7 @@ test('make the search index using the callback API', function (t) {
     indexPath: 'test/sandbox/callbackTest'
   }, function (err, si) {
     t.error(err)
-    si.callbackyAdd({}, data, function (err) {
+    si.concurrentAdd({}, data, function (err) {
       t.error(err)
       si.close(function (err) {
         t.error(err)

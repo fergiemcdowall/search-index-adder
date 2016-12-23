@@ -50,7 +50,7 @@ module.exports = function (givenOptions, callback) {
         new DBWriteMergeStream(options))
     }
 
-    Indexer.callbackyAdd = function (batchOps, batch, done) {
+    Indexer.concurrentAdd = function (batchOps, batch, done) {
       q.push({
         batch: batch,
         batchOps: batchOps
