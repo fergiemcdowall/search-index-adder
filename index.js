@@ -133,7 +133,7 @@ const getOptions = function (options, done) {
     logLevel: 'error',
     nGramLength: 1,
     nGramSeparator: ' ',
-    separator: /\\n|[|' ><.,\-|]+|\\u0003/,
+    separator: /\s|\\n|\\u0003|[-.,<>]/,
     stopwords: [],
     weight: 0
   }, options)
