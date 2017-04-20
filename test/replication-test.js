@@ -51,7 +51,7 @@ test('simple read from replicator (no ops)', function (t) {
       i++
     })
     .on('end', function () {
-      t.equal(i, 3434)
+      t.equal(i, 3130)
     })
 })
 
@@ -93,7 +93,7 @@ test('simple read from replicated index (no ops)', function (t) {
       i++
     })
     .on('end', function () {
-      t.equal(i, 3434)
+      t.equal(i, 3130)
     })
 })
 
@@ -138,7 +138,7 @@ test('validate gzip replication', function (t) {
       i++
     })
     .on('end', function () {
-      t.equal(i, 3434)
+      t.equal(i, 3130)
     })
 })
 
