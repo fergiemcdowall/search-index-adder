@@ -16,7 +16,6 @@ const RecalibrateDB = require('./lib/delete.js').RecalibrateDB
 const bunyan = require('bunyan')
 const del = require('./lib/delete.js')
 const docProc = require('docproc')
-const leveldown = require('leveldown')
 const levelup = require('levelup')
 const pumpify = require('pumpify')
 
@@ -142,6 +141,7 @@ const getOptions = function (options, done) {
     level: options.logLevel
   })
   if (!options.indexes) {
+    const leveldown = require('leveldown')
     levelup(options.indexPath || 'si', {
       valueEncoding: 'json',
       db: leveldown
