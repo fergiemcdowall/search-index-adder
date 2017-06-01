@@ -4,3 +4,4 @@
 The indexing module for [search-index](http://github.com/fergiemcdowall/search-index)
 
 
+
