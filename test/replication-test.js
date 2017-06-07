@@ -6,14 +6,12 @@ const sandbox = process.env.SANDBOX || 'test/sandbox'
 const sw = require('stopword').en
 const test = require('tape')
 
-const indexAddress = sandbox + '/replicate-test'
-
 var replicator, replicatorTarget, replicatorTarget2
 
 test('make a small search index', function (t) {
   t.plan(3)
   SearchIndexAdder({
-    indexPath: indexAddress
+    indexPath: sandbox + '/replicate-test'
   }, function (err, si) {
     t.error(err)
     const filePath = './node_modules/reuters-21578-json/data/fullFileStream/justTen.str'
@@ -64,7 +62,7 @@ test('initialise replication target', function (t) {
 })
 
 test('simple replication from one index to another', function (t) {
-  t.plan(2)
+  t.plan(5)
   replicator.dbReadStream()
     .pipe(replicatorTarget.dbWriteStream({ merge: false }))
     .on('data', function (data) {
