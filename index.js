@@ -121,7 +121,7 @@ module.exports = function (givenOptions, callback) {
 const getOptions = function (options, done) {
   options = Object.assign({}, {
     deletable: true,
-    batchSize: 100000,
+    batchSize: 1000,
     fieldedSearch: true,
     fieldOptions: {},
     preserveCase: false,
