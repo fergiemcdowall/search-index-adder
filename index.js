@@ -27,8 +27,9 @@ module.exports = function (givenOptions, callback) {
     Indexer.options = options
 
     var q = async.queue(function (batch, done) {
+      var s
       if (batch.operation === 'add') {
-        const s = new Readable({ objectMode: true })
+        s = new Readable({ objectMode: true })
         batch.batch.forEach(function (doc) {
           s.push(doc)
         })
@@ -43,7 +44,7 @@ module.exports = function (givenOptions, callback) {
             return done(err)
           })
       } else if (batch.operation === 'delete') {
-        const s = new Readable()
+        s = new Readable()
         batch.docIds.forEach(function (docId) {
           s.push(JSON.stringify(docId))
         })
