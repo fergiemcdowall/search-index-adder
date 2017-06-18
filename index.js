@@ -26,21 +26,36 @@ module.exports = function (givenOptions, callback) {
     var Indexer = {}
     Indexer.options = options
 
-    var q = async.queue(function (batch, callback) {
-      const s = new Readable({ objectMode: true })
-      batch.batch.forEach(function (doc) {
-        s.push(doc)
-      })
-      s.push(null)
-      s.pipe(Indexer.defaultPipeline(batch.batchOps))
-        .pipe(Indexer.add())
-        .on('data', function (data) {})
-        .on('end', function () {
-          return callback()
+    var q = async.queue(function (batch, done) {
+      if (batch.operation === 'add') {
+        const s = new Readable({ objectMode: true })
+        batch.batch.forEach(function (doc) {
+          s.push(doc)
         })
-        .on('error', function (err) {
-          return callback(err)
+        s.push(null)
+        s.pipe(Indexer.defaultPipeline(batch.batchOps))
+          .pipe(Indexer.add())
+          .on('data', function (data) {})
+          .on('end', function () {
+            return done()
+          })
+          .on('error', function (err) {
+            return done(err)
+          })
+      } else if (batch.operation === 'delete') {
+        const s = new Readable()
+        batch.docIds.forEach(function (docId) {
+          s.push(JSON.stringify(docId))
         })
+        s.push(null)
+        s.pipe(Indexer.deleteStream(options))
+          .on('data', function () {
+            // nowt
+          })
+          .on('end', function () {
+            done(null)
+          })
+      }
     }, 1)
 
     Indexer.add = function () {
@@ -52,7 +67,17 @@ module.exports = function (givenOptions, callback) {
     Indexer.concurrentAdd = function (batchOps, batch, done) {
       q.push({
         batch: batch,
-        batchOps: batchOps
+        batchOps: batchOps,
+        operation: 'add'
+      }, function (err) {
+        done(err)
+      })
+    }
+
+    Indexer.concurrentDel = function (docIds, done) {
+      q.push({
+        docIds: docIds,
+        operation: 'delete'
       }, function (err) {
         done(err)
       })
