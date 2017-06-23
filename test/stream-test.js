@@ -2,7 +2,6 @@ var fs = require('fs')
 var sia = require('../')
 var SearchIndexSearcher = require('search-index-searcher')
 var test = require('tape')
-var JSONStream = require('JSONStream')
 var indexer
 
 test('init indexer', function (t) {
