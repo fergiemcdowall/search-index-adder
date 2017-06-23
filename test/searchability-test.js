@@ -100,7 +100,7 @@ test('initialize a search index with no fielded search', function (t) {
       .on('data', function (data) {
         // nowt
       })
-      .on('end', function () {
+      .on('finish', function () {
         indexer.close(function (err) {
           t.error(err)
         })
@@ -120,7 +120,7 @@ test('search in a search index with no fielded search', function (t) {
       .on('data', function (data) {
         t.ok(data.document.id === '10')
         t.equals(++counter, 1)
-      }).on('end', function () {
+      }).on('finish', function () {
         searcher.close(function (err) {
           t.error(err)
         })
@@ -141,7 +141,7 @@ test('search in a search index with no fielded search', function (t) {
       .on('data', function (data) {
         counter++
         t.equals(data.document.id, results.shift())
-      }).on('end', function () {
+      }).on('finish', function () {
         t.equals(counter, 2)
         searcher.close(function (err) {
           t.error(err)
@@ -165,7 +165,7 @@ test('cant do a fielded search', function (t) {
     })
       .on('data', function (data) {
         counter++
-      }).on('end', function () {
+      }).on('finish', function () {
         t.equals(counter, 0)
         searcher.close(function (err) {
           t.error(err)
@@ -191,7 +191,7 @@ test('initialize a search index WITH fielded search', function (t) {
       })
       .pipe(indexer.add())
       .on('data', function (data) {})
-      .on('end', function () {
+      .on('finish', function () {
         indexer.close(function (err) {
           t.error(err)
         })
@@ -215,7 +215,7 @@ test('CAN do a fielded search', function (t) {
       .on('data', function (data) {
         t.equals(data.document.id, '3')
         counter++
-      }).on('end', function () {
+      }).on('finish', function () {
         t.equals(counter, 1)
         searcher.close(function (err) {
           t.error(err)
@@ -241,7 +241,7 @@ test('CAN do a fielded search', function (t) {
       .on('data', function (data) {
         t.equals(data.document.id, results.shift())
         counter++
-      }).on('end', function () {
+      }).on('finish', function () {
         t.equals(counter, 3)
         searcher.close(function (err) {
           t.error(err)
@@ -273,7 +273,7 @@ test('initialize a search index WITH fielded search on specified fields', functi
       })
       .pipe(indexer.add())
       .on('data', function (data) {})
-      .on('end', function () {
+      .on('finish', function () {
         indexer.close(function (err) {
           t.error(err)
         })
@@ -298,7 +298,7 @@ test('CAN do a fielded search on "description" field', function (t) {
       .on('data', function (data) {
         t.equals(data.document.id, results.shift())
         counter++
-      }).on('end', function () {
+      }).on('finish', function () {
         t.equals(counter, 3)
         searcher.close(function (err) {
           t.error(err)
@@ -322,7 +322,7 @@ test('CANT do a fielded search on name field', function (t) {
     })
       .on('data', function (data) {
         counter++
-      }).on('end', function () {
+      }).on('finish', function () {
         t.equals(counter, 0)
         searcher.close(function (err) {
           t.error(err)
@@ -347,7 +347,7 @@ test('CAN find stuff from name field in wildcard', function (t) {
       .on('data', function (data) {
         t.equals(data.document.id, '3')
         counter++
-      }).on('end', function () {
+      }).on('finish', function () {
         t.equals(counter, 1)
         searcher.close(function (err) {
           t.error(err)
@@ -379,7 +379,7 @@ test('initialize a search index WITH only name field searchable', function (t) {
       })
       .pipe(indexer.add())
       .on('data', function (data) {})
-      .on('end', function () {
+      .on('finish', function () {
         indexer.close(function (err) {
           t.error(err)
         })
@@ -408,7 +408,7 @@ test('CAN find stuff from name field in wildcard', function (t) {
           name: 'Versace Men\'s Swiss',
           price: '4716' })
         counter++
-      }).on('end', function () {
+      }).on('finish', function () {
         t.equals(counter, 1)
         searcher.close(function (err) {
           t.error(err)
@@ -432,7 +432,7 @@ test('CANT find stuff from description field in wildcard', function (t) {
     })
       .on('data', function (data) {
         counter++
-      }).on('end', function () {
+      }).on('finish', function () {
         t.equals(counter, 0)
         searcher.close(function (err) {
           t.error(err)

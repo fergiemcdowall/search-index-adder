@@ -41,7 +41,7 @@ test('stream file to search-index', { timeout: 6000000 }, function (t) {
     .on('data', function (data) {
       // nowt
     })
-    .on('end', function () {
+    .on('finish', function () {
       console.log('test completed')
       t.ok(true)
     })

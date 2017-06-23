@@ -24,7 +24,7 @@ test('make a small search index', function (t) {
       .on('data', function (data) {
         // t.ok(true, ' data recieved')
       })
-      .on('end', function () {
+      .on('finish', function () {
         t.ok(true, ' stream ended')
         si.close(function (err) {
           t.error(err, ' index closed')
@@ -113,7 +113,7 @@ test('replication from one index to another', function (t) {
     .on('error', function (err) {
       console.log(err)
     })
-    .on('end', function () {
+    .on('finish', function () {
       replicatorTarget2.close(function (err) {
         t.error(err)
       })

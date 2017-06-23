@@ -58,7 +58,7 @@ test('transform stream file', { timeout: 6000000 }, function (t) {
     .on('data', function (data) {
       // nowt
     })
-    .on('end', function () {
+    .on('finish', function () {
       t.ok(true)
     })
 })
@@ -87,7 +87,7 @@ test('can search', function (t) {
       }
     ).on('data', function (data) {
       t.ok(data.document.id, results.shift())
-    }).on('end', function () {
+    }).on('finish', function () {
       si.close(function (err) {
         t.error(err)
       })
@@ -112,7 +112,7 @@ test('can search', function (t) {
       }
     ).on('data', function (data) {
       t.equal(data.document.id, results.shift())
-    }).on('end', function () {
+    }).on('finish', function () {
       si.close(function (err) {
         t.error(err)
       })

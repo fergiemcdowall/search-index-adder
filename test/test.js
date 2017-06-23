@@ -84,7 +84,7 @@ test('simple indexing test', function (t) {
       })
       .pipe(indexer.add())
       .on('data', function (data) {})
-      .on('end', function () {
+      .on('finish', function () {
         indexer.close(function (err) {
           t.error(err)
           t.equals(j, 1000)
@@ -121,7 +121,7 @@ test('preserve array fields in stored document', function (t) {
       s.pipe(indexer.defaultPipeline())
         .pipe(indexer.add())
         .on('data', function (data) {})
-        .on('end', function () {
+        .on('finish', function () {
           var q = {}
           q.query = {
             AND: {'*': ['one']}

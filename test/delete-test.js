@@ -36,7 +36,7 @@ test('make the search index', function (t) {
     s.pipe(si.defaultPipeline())
       .pipe(si.add())
       .on('data', function (data) {})
-      .on('end', function () {
+      .on('finish', function () {
         si.close(function (err) {
           t.error(err)
         })

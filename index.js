@@ -36,8 +36,8 @@ module.exports = function (givenOptions, callback) {
         s.push(null)
         s.pipe(Indexer.defaultPipeline(batch.batchOps))
           .pipe(Indexer.add())
-          .on('data', function (data) {})
-          .on('end', function () {
+          // .on('data', function (data) {})
+          .on('finish', function () {
             return done()
           })
           .on('error', function (err) {
@@ -62,7 +62,8 @@ module.exports = function (givenOptions, callback) {
     Indexer.add = function () {
       return pumpify.obj(
         new IndexBatch(Indexer),
-        new DBWriteMergeStream(options))
+        new DBWriteMergeStream(options)
+      )
     }
 
     Indexer.concurrentAdd = function (batchOps, batch, done) {

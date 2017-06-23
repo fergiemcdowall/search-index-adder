@@ -73,7 +73,7 @@ test('make the search index, removing the pipeline stage that bumps text to lowe
     })
       .pipe(si.add())
       .on('data', function () {})
-      .on('end', function () {
+      .on('finish', function () {
         si.close(function (err) {
           t.error(err)
         })

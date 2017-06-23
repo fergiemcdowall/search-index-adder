@@ -86,7 +86,7 @@ test('make the beatles search index', function (t) {
       })
       .pipe(si.add())
       .on('data', function (d) {})
-      .on('end', function () {
+      .on('finish', function () {
         si.close(function (err) {
           t.error(err)
         })
@@ -111,7 +111,7 @@ test('make the stones search index', function (t) {
       })
       .pipe(si.add())
       .on('data', function (data) {})
-      .on('end', function () {
+      .on('finish', function () {
         si.close(function (err) {
           t.error(err)
         })
@@ -170,7 +170,7 @@ test('gzipped replication from beatles to supergroup', function (t) {
       beatles.dbReadStream()
         .pipe(supergroup.dbWriteStream())
         .on('data', function () {})
-        .on('end', function () {
+        .on('finish', function () {
           supergroup.close(function (err) {
             t.error(err)
             beatles.close(function (err) {
@@ -214,7 +214,7 @@ test('gzipped replication of stones to supergroup', function (t) {
       stones.dbReadStream()
         .pipe(supergroup.dbWriteStream())
         .on('data', function () {})
-        .on('end', function () {
+        .on('finish', function () {
           supergroup.close(function (err) {
             t.error(err)
             stones.close(function (err) {
