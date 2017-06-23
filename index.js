@@ -11,6 +11,7 @@ const DBWriteCleanStream = require('./lib/replicate.js').DBWriteCleanStream
 const DBWriteMergeStream = require('./lib/replicate.js').DBWriteMergeStream
 const DocVector = require('./lib/delete.js').DocVector
 const IndexBatch = require('./lib/add.js').IndexBatch
+const JSONStream = require('JSONStream')
 const Readable = require('stream').Readable
 const RecalibrateDB = require('./lib/delete.js').RecalibrateDB
 const bunyan = require('bunyan')
@@ -36,7 +37,6 @@ module.exports = function (givenOptions, callback) {
         s.push(null)
         s.pipe(Indexer.defaultPipeline(batch.batchOps))
           .pipe(Indexer.add())
-          // .on('data', function (data) {})
           .on('finish', function () {
             return done()
           })
@@ -132,6 +132,21 @@ module.exports = function (givenOptions, callback) {
         .on('end', function () {
           done(null)
         })
+    }
+
+    Indexer.feed = function (ops) {
+      return pumpify.obj(
+        Indexer.defaultPipeline(ops),
+        Indexer.add(ops)
+      )
+    }
+
+    Indexer.feedFromFile = function (ops) {
+      return pumpify(
+        JSONStream.parse(),
+        Indexer.defaultPipeline(ops),
+        Indexer.add(ops)
+      )
     }
 
     Indexer.flush = function (APICallback) {
