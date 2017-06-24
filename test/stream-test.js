@@ -33,7 +33,7 @@ test('stream file to search-index', { timeout: 6000000 }, function (t) {
   const filePath = './node_modules/reuters-21578-json/data/fullFileStream/justTen.str'
   // const filePath = './data.json'
   fs.createReadStream(filePath)
-    .pipe(indexer.feedFromFile())
+    .pipe(indexer.feed())
     .on('data', function (data) {
       // nowt
     })

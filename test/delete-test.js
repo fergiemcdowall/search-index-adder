@@ -33,7 +33,7 @@ test('make the search index', function (t) {
     indexPath: 'test/sandbox/deleteTest'
   }, function (err, si) {
     t.error(err)
-    s.pipe(si.feed())
+    s.pipe(si.feed({ objectMode: true }))
       .on('data', function (data) {})
       .on('finish', function () {
         si.close(function (err) {

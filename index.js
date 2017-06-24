@@ -135,18 +135,20 @@ module.exports = function (givenOptions, callback) {
     }
 
     Indexer.feed = function (ops) {
-      return pumpify.obj(
-        Indexer.defaultPipeline(ops),
-        Indexer.add(ops)
-      )
-    }
-
-    Indexer.feedFromFile = function (ops) {
-      return pumpify(
-        JSONStream.parse(),
-        Indexer.defaultPipeline(ops),
-        Indexer.add(ops)
-      )
+      if (ops && ops.objectMode) {
+        // feed from stream of objects
+        return pumpify.obj(
+          Indexer.defaultPipeline(ops),
+          Indexer.add(ops)
+        )
+      } else {
+        // feed from stream of strings
+        return pumpify(
+          JSONStream.parse(),
+          Indexer.defaultPipeline(ops),
+          Indexer.add(ops)
+        )
+      }
     }
 
     Indexer.flush = function (APICallback) {
