@@ -1,6 +1,6 @@
 {
   "name": "search-index-adder",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "The indexing module for search-index",
   "main": "index.js",
   "config": {
@@ -39,6 +39,7 @@
     "leveldown": "level-js"
   },
   "dependencies": {
+    "JSONStream": "^1.2.1",
     "async": "^2.3.0",
     "bunyan": "^1.8.10",
     "docproc": "^0.0.10",
@@ -49,7 +50,6 @@
     "leveldown": "^1.7.1"
   },
   "devDependencies": {
-    "JSONStream": "^1.2.1",
     "browserify": "^13.1.0",
     "commitizen": "^2.9.6",
     "conventional-github-releaser": "^1.1.11",
