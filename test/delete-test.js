@@ -87,6 +87,42 @@ test('confirm can search with document deleted', function (t) {
     si.search({
       AND: {'*': ['*']}
     }).on('data', function (data) {
+      // console.log(JSON.stringify(data, null, 2))
+      t.equals(data.document.id, results.shift())
+    }).on('end', function () {
+      si.close(function (err) {
+        t.error(err)
+      })
+    })
+  })
+})
+
+test('can delete 2 docs', function (t) {
+  t.plan(3)
+  SearchIndexAdder({
+    indexPath: 'test/sandbox/deleteTest'
+  }, function (err, si) {
+    t.error(err)
+    si.deleter(['two', 'four'], function (err) {
+      t.error(err)
+      si.close(function (err) {
+        t.error(err)
+      })
+    })
+  })
+})
+
+test('confirm can search with 3 docs deleted', function (t) {
+  t.plan(3)
+  var results = [ 'three' ]
+  SearchIndexSearcher({
+    indexPath: 'test/sandbox/deleteTest'
+  }, function (err, si) {
+    t.error(err)
+    si.search({
+      AND: {'*': ['*']}
+    }).on('data', function (data) {
+      // console.log(JSON.stringify(data, null, 2))
       t.equals(data.document.id, results.shift())
     }).on('end', function () {
       si.close(function (err) {
