@@ -1,6 +1,6 @@
 {
   "name": "search-index-adder",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "The indexing module for search-index",
   "main": "index.js",
   "config": {
@@ -42,7 +42,7 @@
     "JSONStream": "^1.2.1",
     "async": "^2.3.0",
     "bunyan": "^1.8.10",
-    "docproc": "^0.0.10",
+    "docproc": "^1.0.0",
     "levelup": "^1.3.8",
     "pumpify": "^1.3.5"
   },
