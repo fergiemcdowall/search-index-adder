@@ -70,7 +70,16 @@ test('simple indexing test', function (t) {
   var j = 0
   var k = 0
   SearchIndexAdder({
-    indexPath: 'test/sandbox/simpleIndexing'
+    indexPath: 'test/sandbox/simpleIndexing',
+    searchable: false,
+    wildcard: false,
+    compositeField: false,
+    appendOnly: true,
+    fieldOptions: {
+      places: {
+        searchable: true
+      }
+    }
   }, function (err, indexer) {
     t.error(err)
     fs.createReadStream('./node_modules/reuters-21578-json/data/fullFileStream/000.str')
@@ -93,7 +102,7 @@ test('simple indexing test', function (t) {
             t.error(err)
             var q = {}
             q.query = {
-              AND: {'*': ['usa']}
+              AND: {'places': ['usa']}
             }
             q.pageSize = 10
             var i = 0
