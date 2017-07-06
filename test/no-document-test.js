@@ -30,7 +30,7 @@ test('initialize a search index', t => {
   })
 })
 
-test('make an index', t => {
+test('make an index with storeDocument: false', t => {
   t.plan(1)
   var s = new Readable({ objectMode: true })
   for (var i = 1; i <= batchSize; i++) {
@@ -54,7 +54,7 @@ test('make an index', t => {
     })
 })
 
-test('get all docs', t => {
+test('results dont have documents', t => {
   t.plan(10)
   sis.search({
     query: [
@@ -66,7 +66,50 @@ test('get all docs', t => {
     ]
   })
     .on('data', function (d) {
-      t.pass('got result')
+      t.equal(d.document, undefined)
+    })
+    .on('error', function (err) {
+      t.error(err)
+    })
+})
+
+test('make an index with storeDocument: true', t => {
+  t.plan(1)
+  var s = new Readable({ objectMode: true })
+  for (var i = 1; i <= batchSize; i++) {
+    s.push({
+      id: i,
+      tokens: 'this is the amazing doc number ' + num(i)
+    })
+  }
+  s.push(null)
+  s.pipe(sia.feed({
+    objectMode: true,
+    storeDocument: true,
+    wildcard: false,
+    compositeField: false
+  }))
+    .on('finish', function () {
+      t.pass('finished')
+    })
+    .on('error', function (err) {
+      t.error(err)
+    })
+})
+
+test('results have documents', t => {
+  t.plan(10)
+  sis.search({
+    query: [
+      {
+        AND: {
+          tokens: ['amazing']
+        }
+      }
+    ]
+  })
+    .on('data', function (d) {
+      t.notEqual(d.document, undefined)
     })
     .on('error', function (err) {
       t.error(err)
