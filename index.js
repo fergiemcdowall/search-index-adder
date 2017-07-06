@@ -164,13 +164,16 @@ module.exports = function (givenOptions, callback) {
 
 const getOptions = function (options, done) {
   options = Object.assign({}, {
+    appendOnly: false,
     deletable: true,
     batchSize: 1000,
+    compositeField: true,
     fieldedSearch: true,
     fieldOptions: {},
     preserveCase: false,
     keySeparator: '￮',
     storeable: true,
+    storeDocument: true,
     searchable: true,
     indexPath: 'si',
     logLevel: 'error',
@@ -178,7 +181,8 @@ const getOptions = function (options, done) {
     nGramSeparator: ' ',
     separator: /\s|\\n|\\u0003|[-.,<>]/,
     stopwords: [],
-    weight: 0
+    weight: 0,
+    wildcard: true
   }, options)
   options.log = bunyan.createLogger({
     name: 'search-index',
