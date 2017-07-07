@@ -57,7 +57,7 @@
     "level-js": "^2.2.4",
     "level-out": "0.0.7",
     "reuters-21578-json": "^0.0.8",
-    "search-index-searcher": "^0.2.5",
+    "search-index-searcher": "^0.2.7",
     "standard": "^8.5.0",
     "standard-changelog": "^1.0.1",
     "stopword": "^0.1.1",
