@@ -18,7 +18,7 @@
     "lint": "standard --fix test/*.js lib/* ./index.js",
     "print-version-from-package-json": "node -e \"process.stdout.write(require('./package.json').version)\"",
     "stress-test": "rm -rf test/sandbox && mkdir test/sandbox && node --max_old_space_size=200 test/stresstest/stress-test.js",
-    "test": "rm -rf test/sandbox && mkdir test/sandbox && tape test/*.js && npm run lint"
+    "test": "npm run lint && rm -rf test/sandbox && mkdir test/sandbox && tape test/*.js"
   },
   "repository": {
     "type": "git",
@@ -55,6 +55,7 @@
     "conventional-github-releaser": "^1.1.11",
     "cz-conventional-changelog": "^2.0.0",
     "level-js": "^2.2.4",
+    "level-out": "0.0.7",
     "reuters-21578-json": "^0.0.8",
     "search-index-searcher": "^0.2.5",
     "standard": "^8.5.0",

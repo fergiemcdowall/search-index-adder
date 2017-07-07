@@ -75,6 +75,8 @@ test('simple indexing test', function (t) {
     wildcard: false,
     compositeField: false,
     appendOnly: true,
+    fastSort: false,
+    storeDocument: false,
     fieldOptions: {
       places: {
         searchable: true

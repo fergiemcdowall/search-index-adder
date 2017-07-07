@@ -35,6 +35,7 @@ const getOptions = function (options, done) {
     deletable: true,
     batchSize: 1000,
     compositeField: true,
+    fastSort: true,
     fieldedSearch: true,
     fieldOptions: {},
     preserveCase: false,
