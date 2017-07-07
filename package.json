@@ -52,7 +52,7 @@
   "devDependencies": {
     "browserify": "^13.1.0",
     "commitizen": "^2.9.6",
-    "conventional-github-releaser": "^1.1.11",
+    "conventional-github-releaser": "1.1.10",
     "cz-conventional-changelog": "^2.0.0",
     "level-js": "^2.2.4",
     "level-out": "0.0.7",
