@@ -42,6 +42,7 @@ const getOptions = function (options, done) {
     keySeparator: '￮',
     storeable: true,
     storeDocument: true,
+    storeVector: true,
     searchable: true,
     indexPath: 'si',
     logLevel: 'error',

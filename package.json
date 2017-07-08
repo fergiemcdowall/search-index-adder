@@ -1,6 +1,6 @@
 {
   "name": "search-index-adder",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "description": "The indexing module for search-index",
   "main": "index.js",
   "config": {
@@ -57,7 +57,7 @@
     "level-js": "^2.2.4",
     "level-out": "0.0.7",
     "reuters-21578-json": "^0.0.8",
-    "search-index-searcher": "^0.2.7",
+    "search-index-searcher": "^0.2.8",
     "standard": "^8.5.0",
     "standard-changelog": "^1.0.1",
     "stopword": "^0.1.1",
