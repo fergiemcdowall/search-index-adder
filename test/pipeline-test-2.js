@@ -64,7 +64,6 @@ test('make the search index, removing the pipeline stage that bumps text to lowe
       new docProc.RemoveStopWords(si.options),
       new docProc.CalculateTermFrequency(si.options),
       new docProc.CreateCompositeVector(si.options),
-      new docProc.CreateSortVectors(si.options),
       new docProc.FieldedSearch(si.options)
     )).on('data', function (data) {
       t.looseEqual(
