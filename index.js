@@ -6,7 +6,7 @@ standalone
 
 */
 
-const bunyan = require('bunyan')
+const Logger = require('js-logger')
 const levelup = require('levelup')
 const API = require('./lib/API.js')
 
@@ -45,7 +45,8 @@ const getOptions = function (options, done) {
     storeVector: true,
     searchable: true,
     indexPath: 'si',
-    logLevel: 'error',
+    logLevel: 'ERROR',
+    logHandler: Logger.createDefaultHandler(),
     nGramLength: 1,
     nGramSeparator: ' ',
     separator: /\s|\\n|\\u0003|[-.,<>]/,
@@ -53,10 +54,13 @@ const getOptions = function (options, done) {
     weight: 0,
     wildcard: true
   }, options)
-  options.log = bunyan.createLogger({
-    name: 'search-index',
-    level: options.logLevel
-  })
+  options.log = Logger.get('search-index-adder')
+  // We pass the log level as string because the Logger[logLevel] returns
+  // an object, and Object.assign deosn't make deep assign so it breakes
+  // We used toUpperCase() for backward compatibility
+  options.log.setLevel(Logger[options.logLevel.toUpperCase()])
+  // Use the global one because the library doesn't support providing handler to named logger
+  Logger.setHandler(options.logHandler)
   if (!options.indexes) {
     const leveldown = require('leveldown')
     levelup(options.indexPath || 'si', {
