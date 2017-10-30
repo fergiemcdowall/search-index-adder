@@ -62,13 +62,14 @@ test('initialise replication target', function (t) {
 })
 
 test('simple replication from one index to another', function (t) {
-  t.plan(5)
+  t.plan(1)
   replicator.dbReadStream()
     .pipe(replicatorTarget.dbWriteStream({ merge: false }))
     .on('data', function (data) {
-      t.ok(true, 'data event received')
+      t.fail('shouldnt have recieved data')
     })
-    .on('end', function () {
+    .on('finish', function () {
+      console.log('AIYO!')
       replicatorTarget.close(function (err) {
         t.error(err)
       })
