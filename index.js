@@ -25,6 +25,7 @@ module.exports = function (givenOptions, callback) {
     Indexer.deleter = api.deleter
     Indexer.feed = api.feed
     Indexer.flush = api.flush
+    Indexer.synonyms = api.synonyms
     return callback(err, Indexer)
   })
 }
