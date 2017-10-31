@@ -3,7 +3,7 @@ const SearchIndexSearcher = require('search-index-searcher')
 const test = require('tape')
 const Readable = require('stream').Readable
 const fs = require('fs')
-const indexPath = 'test/sandbox/synonymTest'
+const indexPath = 'test/sandbox/synonymTestx'
 
 const data = [
   {
@@ -48,18 +48,20 @@ test('make the search index', function (t) {
 })
 
 test('Add synonyms', function (t) {
-  t.plan(2)
+  t.plan(3)
   var synonyms = JSON.parse(fs.readFileSync('./test/synonyms.json', 'utf8'))
   SearchIndexAdder({
     indexPath: indexPath
   }, function (err, index) {
     t.error(err)
     index.synonyms(synonyms, err => {
-      t.error(err)      
+      t.error(err)
+      index.close(function (err) {
+        t.error(err)
+      })
     })
   })
 })
-
 
 test('confirm can search as normal', function (t) {
   t.plan(3)
