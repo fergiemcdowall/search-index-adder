@@ -8,7 +8,8 @@ const indexPath = 'test/sandbox/synonymTest'
 const data = [
   {
     id: 'one',
-    text: 'the first doc'
+    title: 'The Big Title oppsigelse',
+    text: 'the first doc L20050617-62 is about usakelig oppsigelse'
   },
   {
     id: 'two',
@@ -32,7 +33,8 @@ test('make the search index', function (t) {
   })
   s.push(null)
   SearchIndexAdder({
-    indexPath: indexPath
+    indexPath: indexPath,
+    separator: ' '
   }, function (err, si) {
     t.error(err)
     s.pipe(si.feed({ objectMode: true }))
@@ -59,21 +61,29 @@ test('Add synonyms', function (t) {
 })
 
 
-/* test('confirm can search as normal', function (t) {
- *   t.plan(6)
- *   var results = [ 'two', 'three', 'one', 'four' ]
- *   SearchIndexSearcher({
- *     indexPath: indexPath
- *   }, function (err, si) {
- *     t.error(err)
- *     si.search({
- *       AND: {'*': ['*']}
- *     }).on('data', function (data) {
- *       t.equals(data.document.id, results.shift())
- *     }).on('end', function () {
- *       si.close(function (err) {
- *         t.error(err)
- *       })
- *     })
- *   })
- * })*/
+test('confirm can search as normal', function (t) {
+  t.plan(3)
+  var results = [ 'one' ]
+  SearchIndexSearcher({
+    indexPath: indexPath
+  }, function (err, si) {
+    t.error(err)
+    var q = {
+      query: [
+        {
+          AND: {
+            title: ['oppsigelse'],
+            text: ['oppsigelse', 'usakelig', 'arbeidsmiljøl']
+          }
+        }
+      ]
+    }
+    si.search(q).on('data', function (data) {
+      t.equals(data.document.id, results.shift())
+    }).on('end', function () {
+      si.close(function (err) {
+        t.error(err)
+      })
+    })
+  })
+})
